@@ -32,14 +32,12 @@ parallel --will-cite -j 23 annotate_mnd {} ::: {1..22} X
 
 snp_stats() {
   head -n 100000 ${sample}_snp_annotated_${1}.txt | \
-  ${juiceDir}/common/snp_stats.awk - > snp_stats_${1}.txt 2> snps_found_${1}.txt
+  awk ${juiceDir}/common/snp_stats.awk - > snp_stats_${1}.txt 2> snps_found_${1}.txt
 
   sort snps_found_${1}.txt | uniq| wc -l | \
     awk 'OFS="\t" {print "Unique SNPs present in that dataset", $0}' >> snp_stats_${1}.txt
 }
 
-export -f snp_stats() {
-
-}
+export -f snp_stats
 
 parallel --will-cite -j 23 snp_stats {} ::: {1..22} X
