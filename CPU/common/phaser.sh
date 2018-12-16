@@ -46,7 +46,7 @@ export -f snp_stats
 
 parallel --will-cite -j 23 snp_stats {} ::: {1..22} X
 
-awk 'OFS="\t" {print "total, total_single, single_mismatch", "total_both", "both_mismatch", "ref", "alt", "snps_present", "snps_total", "snps_ratio"}' > snp_stats.txt
+awk 'OFS="\t" {print "chr", "total", "total_single", "single_mismatch", "total_both", "both_mismatch", "ref", "alt", "snps_present", "snps_total", "snps_ratio"}' > snp_stats.txt
 
 
-parallel --will-cite -j 1 "cut -f 2 snp_stats_{}.txt | awk '\{print\}' ORS='\t' >> snp_stats.txt" ::: {1..22} X
+parallel --will-cite -j 1 "cut -f 2 snp_stats_{}.txt | awk '\{print\}' ORS='\t' END\{print \$0, \$9\/\$8 \} >> snp_stats.txt" ::: {1..22} X
