@@ -45,10 +45,10 @@ export -f snp_stats
 
 parallel --will-cite -j 23 snp_stats {} ::: {1..22} X
 
-echo -e "chr\ttotal\ttotal_single\tsingle_mismatch\ttotal_both\tboth_mismatch\tref\talt\tsnps_present\tsnps_total\tsnps_ratio" > snp_stats.txt
+echo -e "chr\ttotal\ttotal_single\tsingle_mismatch\ttotal_both\tmedian_length\tcis_short\tcis_long\tboth_mismatch\tref\talt\tsnps_total\tsnps_present\tsnps_ratio" > snp_stats.txt
 
 for i in {1..22} X;
 do
-  cut -f 2 snp_stats_${i}.txt | awk '{print}' ORS="\t" | awk -v chr=$i '{print chr, $0, $9/$8}' >> snp_stats.txt
+  cut -f 2 snp_stats_${i}.txt | awk '{print}' ORS="\t" | awk -v chr=$i '{print chr, $0, $13/$12}' >> snp_stats.txt
   rm snp_stats_${i}.txt
 done
