@@ -31,11 +31,10 @@ parallel --will-cite -j 23 annotate_mnd {} ::: {1..22} X
 
 
 snp_stats() {
-  head -n 100000 ${sample}_snp_annotated_${1}.txt | \
-  ${juiceDir}/common/snp_stats.awk - > snp_stats_${1}.txt 2> snps_found_${1}.txt
+  ${juiceDir}/common/snp_stats.awk ${sample}_snp_annotated_${1}.txt > snp_stats_${1}.txt 2> snps_found_${1}.txt
 
   wc -l ${sample}_${1}_heterozygous_positions.txt | \
-    awk 'OFS="\t" {print "Total unique SNPs", $0}' >> snp_stats_${1}.txt
+    awk 'OFS="\t" {print "Total unique SNPs", $1}' >> snp_stats_${1}.txt
   sort snps_found_${1}.txt | uniq| wc -l | \
     awk 'OFS="\t" {print "Unique SNPs present in that dataset", $0}' >> snp_stats_${1}.txt
 
@@ -46,7 +45,10 @@ export -f snp_stats
 
 parallel --will-cite -j 23 snp_stats {} ::: {1..22} X
 
-awk 'OFS="\t" {print "chr", "total", "total_single", "single_mismatch", "total_both", "both_mismatch", "ref", "alt", "snps_present", "snps_total", "snps_ratio"}' > snp_stats.txt
+echo -e "chr\ttotal\ttotal_single\tsingle_mismatch\ttotal_both\tboth_mismatch\tref\talt\tsnps_present\tsnps_total\tsnps_ratio" > snp_stats.txt
 
-
-parallel --will-cite -j 1 "cut -f 2 snp_stats_{}.txt | awk '\{print\}' ORS='\t' END\{print \$0, \$9\/\$8 \} >> snp_stats.txt" ::: {1..22} X
+for i in {1..22} X;
+do
+  cut -f 2 snp_stats_${i}.txt | awk '{print}' ORS="\t" | awk -v chr=$i '{print chr, $0, $9/$8}' >> snp_stats.txt
+  rm snp_stats_${i}.txt
+done
