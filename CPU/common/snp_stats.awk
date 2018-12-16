@@ -67,14 +67,14 @@ END {
     OFS="\t"
     print "Total reads overlapping SNPs", either + both + complex + complex_both + mismatch + mismatch_both
     print "Overlap SNP on one read end", either + mismatch + complex
-    #print "\t Reference", ref
-    #print "\t Alternative", alt
-    print "\t Neither", mismatch
+    #print "  Reference", ref
+    #print "  Alternative", alt
+    print "  Neither", mismatch
     print "Overlap SNP on both read ends", both + mismatch_both + complex_both
-    #print "\t Reference agreement", ref_both
-    #print "\t Alternative agreement", alt_both
-    print "\t Reference/Alternative disagreement", trans
-    print "\t Neither", mismatch_both
+    #print "  Reference agreement", ref_both
+    #print "  Alternative agreement", alt_both
+    #print "  Reference/Alternative disagreement", trans
+    print "  Neither", mismatch_both
     print "Total Reference contacts", ref + ref_both
     print "Total Alternative contacts", alt + alt_both
 }
