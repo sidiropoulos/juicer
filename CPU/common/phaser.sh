@@ -36,7 +36,7 @@ snp_stats() {
   wc -l ${sample}_${1}_heterozygous_positions.txt | \
     awk 'OFS="\t" {print "Total unique SNPs", $1}' >> snp_stats_${1}.txt
   sort snps_found_${1}.txt | uniq| wc -l | \
-    awk 'OFS="\t" {print "Unique SNPs present in that dataset", $0}' >> snp_stats_${1}.txt
+    awk 'OFS="\t" {print "Total unique SNPs on informative read-pairs", $0}' >> snp_stats_${1}.txt
 
   rm snps_found_${1}.txt
 }

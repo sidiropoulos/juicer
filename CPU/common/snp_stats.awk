@@ -6,16 +6,18 @@ BEGIN {
   ref=0; alt=0; ref_both=0;alt_both=0; trans=0;
   cis_short=0; cis_long=0; #c=0;
 }
-{ split($12,pos1,":");
-  split($13,pos2,":");
-
-  if (pos1[3]!="") print pos1[3] > "/dev/stderr";
-  if (pos1[6]!="") print pos1[6] > "/dev/stderr";
-  if (pos2[3]!="") print pos2[3] > "/dev/stderr";
-  if (pos2[6]!="") print pos2[6] > "/dev/stderr";
-
+{
   if (($12 ~ /maternal/ && $12 ~ /paternal/) && ($13 ~ /maternal/ && $13 ~ /paternal/)) {
     complex_both+=1;
+
+    split($12,pos1,":");
+    split($13,pos2,":");
+
+    if (pos1[3]!="") print pos1[3] > "/dev/stderr";
+    if (pos1[6]!="") print pos1[6] > "/dev/stderr";
+    if (pos2[3]!="") print pos2[3] > "/dev/stderr";
+    if (pos2[6]!="") print pos2[6] > "/dev/stderr";
+
 
     #frag_len[c++] = $7 - $3;
     if ($7 - $3 <= 20000) {
@@ -30,6 +32,14 @@ BEGIN {
   } else if ($12 ~ /maternal/ && $13 ~ /maternal/) {
       alt_both+=1;
       both+=1;
+
+      split($12,pos1,":");
+      split($13,pos2,":");
+
+      if (pos1[3]!="") print pos1[3] > "/dev/stderr";
+      if (pos1[6]!="") print pos1[6] > "/dev/stderr";
+      if (pos2[3]!="") print pos2[3] > "/dev/stderr";
+      if (pos2[6]!="") print pos2[6] > "/dev/stderr";
 
       #frag_len[c++] = $7 - $3;
       if ($7 - $3 <= 20000) {
@@ -51,6 +61,14 @@ BEGIN {
       }
 
   } else if ($12 ~ /paternal/ && $13 ~ /paternal/) {
+
+      split($12,pos1,":");
+      split($13,pos2,":");
+
+      if (pos1[3]!="") print pos1[3] > "/dev/stderr";
+      if (pos1[6]!="") print pos1[6] > "/dev/stderr";
+      if (pos2[3]!="") print pos2[3] > "/dev/stderr";
+      if (pos2[6]!="") print pos2[6] > "/dev/stderr";
 
       ref_both+=1;
       both+=1;
