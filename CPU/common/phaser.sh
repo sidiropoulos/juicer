@@ -31,7 +31,7 @@ parallel --will-cite -j 23 annotate_mnd {} ::: {1..22} X
 
 
 snp_stats() {
-  ${juiceDir}/common/snp_stats.awk ${sample}_snp_annotated_${1}.txt > snp_stats_${1}.txt 2> snps_found_${1}.txt
+ ${juiceDir}/common/snp_stats.awk ${sample}_snp_annotated_${1}.txt > snp_stats_${1}.txt 2> snps_found_${1}.txt
 
   wc -l ${sample}_${1}_heterozygous_positions.txt | \
     awk 'OFS="\t" {print "Total unique SNPs", $1}' >> snp_stats_${1}.txt
@@ -49,6 +49,6 @@ echo -e "chr\ttotal\ttotal_single\tsingle_mismatch\ttotal_both\tcis_short\tcis_l
 
 for i in {1..22} X;
 do
-  cut -f 2 snp_stats_${i}.txt | awk '{print}' ORS="\t" | awk -v chr=$i '{print chr, $0, $12/$11}' >> snp_stats.txt
+  cut -f 2 snp_stats_${i}.txt | awk '{print}' ORS="\t" | awk -v chr=$i '{print chr, $0, $11/$10}' >> snp_stats.txt
   rm snp_stats_${i}.txt
 done
