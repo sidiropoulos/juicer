@@ -1,6 +1,11 @@
-BEGIN {mismatch_both=0;mismatch=0;both=0;either=0;complex=0;complex_both=0;ref=0;alt=0;ref_both=0;alt_both=0;trans=0;} {
+#!/usr/bin/awk -f
 
-  split($12,pos1,":");
+BEGIN {
+  mismatch_both=0; mismatch=0;
+  both=0; either=0; complex=0; complex_both=0;
+  ref=0; alt=0; ref_both=0;alt_both=0; trans=0;
+}
+{ split($12,pos1,":");
   split($13,pos2,":");
 
   if (pos1[3]!="") print pos1[3] > "/dev/stderr";
@@ -57,8 +62,9 @@ BEGIN {mismatch_both=0;mismatch=0;both=0;either=0;complex=0;complex_both=0;ref=0
 
   }
 
-
-  } END { OFS="\t"
+}
+END {
+    OFS="\t"
     print "Total reads overlapping SNPs", either + both + complex + complex_both + mismatch + mismatch_both
     print "Overlap SNP on one read end", either + mismatch + complex
     #print "\t Reference", ref
