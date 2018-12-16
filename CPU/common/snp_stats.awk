@@ -87,12 +87,10 @@ END {
 
     informative_both = both + complex_both
     if (informative_both % 2) {
-            median = frag_len[(informative_both + 1) / 2];
-        } else {
-            median = (frag_len[(informative_both / 2)] + frag_len[(informative_both / 2) + 1]) / 2.0;
-        }
+      median = frag_len[(informative_both + 1) / 2];
+    } else {
+      median = (frag_len[(informative_both / 2)] + frag_len[(informative_both / 2) + 1]) / 2.0
     }
-
 
     print "Total reads overlapping SNPs", either + both + complex + complex_both + mismatch + mismatch_both
     print "Overlap SNP on one read end", either + mismatch + complex
