@@ -78,10 +78,10 @@ echo "$0 $@"
 ## use cluster load commands:
 #usePath=""
 load_bwa="module load bwa/0.7.15"
-load_java='module load java/jdk1.8.0_131'
+load_java="module load java/1.8.0"
 #load_cluster=""
 #load_coreutils=""
-load_cuda='module load cuda/7.5.18/gcc/4.4.7'
+load_cuda="module load cuda75/toolkit/7.5.18"
 
 # Juicer directory, contains scripts/, references/, and restriction_sites/
 # can also be set in options via -D
@@ -99,7 +99,7 @@ long_walltime="walltime=120:00:00"
 # give your email address to be used in #PBS -M to receive notifications when job error occurs.
 # Must be either set with an email address or skipped
 # This email is not included in the launch stat and postprocessing steps, add manually if needed
-EMAIL='#PBS -M xxx@gmail.com'
+EMAIL='#PBS -M nikos@finsenlab.dk'
 splitsize=90000000
 # fastq files should look like filename_R1.fastq and filename_R2.fastq
 # if your fastq files look different, change this value
@@ -395,9 +395,9 @@ then
                 timestamp=$(date +"%s" | cut -c 4-10)
                 jID_split=$(qsub <<SPLITEND
                 #PBS -S /bin/bash
-                #PBS -q $queue
+                #PBS -q $queue -W group_list=cu_10027 -A cu_10027
                 #PBS -l $walltime
-                #PBS -l nodes=1:ppn=1:AMD
+                #PBS -l nodes=1:ppn=1:thinnode
                 #PBS -l mem=20gb
                 ${EMAIL}
                 #PBS -m a
@@ -421,9 +421,9 @@ SPLITEND
             timestamp=$(date +"%s" | cut -c 4-10)
             jID_splitmv=$(qsub << SPLITMV
             #PBS -S /bin/bash
-            #PBS -q $queue
+            #PBS -q $queue -W group_list=cu_10027 -A cu_10027
             #PBS -l $walltime
-            #PBS -l nodes=1:ppn=1:AMD
+            #PBS -l nodes=1:ppn=1:thinnode
             #PBS -l mem=20gb
             ${EMAIL}
             #PBS -m a
@@ -461,9 +461,9 @@ SPLITMV
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<ALIGNWRAP
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=6gb
     #PBS -o ${logdir}/${timestamp}_alnwrap_${groupname}.log
     #PBS -j oe
@@ -491,9 +491,9 @@ SPLITMV
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<-CNTLIG
         #PBS -S /bin/bash
-        #PBS -q $queue
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
         #PBS -l $walltime
-        #PBS -l nodes=1:ppn=1:AMD
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=4gb
         ${EMAIL}
         #PBS -m a
@@ -516,7 +516,7 @@ SPLITMV
         export ligation=${ligation}
         ${juiceDir}/scripts/countligations.sh
 CNTLIG
-        jID_cntlig=\$(qstat | grep "CtLig\${countjobs}${groupname}" | cut -d ' ' -f 1 )
+        jID_cntlig=\$(qstat | grep "CtLig\${countjobs}${groupname}" | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
         echo "jID_cntlig \${countjobs} id is \${jID_cntlig}"
         ## Align read1
         # align read1 fastq
@@ -536,9 +536,9 @@ CNTLIG
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<ALGNR1
         #PBS -S /bin/bash
-        #PBS -q $queue
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
         #PBS -l $walltime
-        #PBS -l nodes=1:ppn=${threads}:AMD
+        #PBS -l nodes=1:ppn=${threads}:thinnode
         #PBS -l mem=\${alloc_mem}
         ${EMAIL}
         #PBS -m a
@@ -579,7 +579,7 @@ CNTLIG
 ALGNR1
         wait
         # Get the jobID from qstat ouput by searching job specific string,"read1\${countjobs}" , in job Name.
-        jID_1=\$( qstat | grep "ALN1\${countjobs}${groupname}" |cut -d ' ' -f 1 )
+        jID_1=\$( qstat | grep "ALN1\${countjobs}${groupname}" |cut -d ' ' -f 1 | cut -d "." -f 1-2 )
         echo "align1 \$countjobs id is: \${jID_1}"
         # Align read2
         echo "starting read2 alignment"
@@ -587,9 +587,9 @@ ALGNR1
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<ALGNR2
         #PBS -S /bin/bash
-        #PBS -q $queue
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
         #PBS -l $walltime
-        #PBS -l nodes=1:ppn=${threads}:AMD
+        #PBS -l nodes=1:ppn=${threads}:thinnode
         #PBS -l mem=\$alloc_mem
         ${EMAIL}
         #PBS -m a
@@ -631,16 +631,16 @@ ALGNR2
         wait
 
         # Get the jobID of job above from qstat ouput using job specific string,"read2\${countjobs}" , in jobName.
-        jID_2=\$(qstat | grep "ALN2\${countjobs}${groupname}" |cut -d ' ' -f 1 )
+        jID_2=\$(qstat | grep "ALN2\${countjobs}${groupname}" |cut -d ' ' -f 1 | cut -d "." -f 1-2 )
         echo "align2 \${countjobs} id is: \${jID_2}"
         echo "starting merging from read1 and read2"
         # wait for align1 and align2 jobs finish,then merge
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<- MRGALL
         #PBS -S /bin/bash
-        #PBS -q $queue
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
         #PBS -l $long_walltime
-        #PBS -l nodes=1:ppn=1:AMD
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=24gb
         ${EMAIL}
         #PBS -m a
@@ -708,15 +708,15 @@ ALGNR2
 MRGALL
     wait
 
-    jID_3=\$(qstat | grep "Mrg\${countjobs}${groupname}" | cut -d ' ' -f 1 )
+    jID_3=\$(qstat | grep "Mrg\${countjobs}${groupname}" | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
     echo "merging align1 and align2 \${coutjobs} id is \${jID_3}"
     echo "starting chimeric step after alignment"
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CHIMERIC
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=24gb
     ${EMAIL}
     #PBS -m a
@@ -770,7 +770,7 @@ MRGALL
 CHIMERIC
     wait
 
-    jID_4=\$(qstat | grep "Chmr\${countjobs}${groupname}" | cut -d ' ' -f 1)
+    jID_4=\$(qstat | grep "Chmr\${countjobs}${groupname}" | cut -d ' ' -f 1 | cut -d "." -f 1-2)
     echo "chimeric \$countjobs id is \$jID_4"
     exitstatus=\$(qstat -f \${jID_4} |grep "exit_status" )
     echo "the exit status of \{jID_4} is \${exitstatus}"
@@ -786,8 +786,8 @@ CHIMERIC
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CKALIGNFAIL
     #PBS -S /bin/bash
-    #PBS -q $queue  
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=2gb
     #PBS -l $walltime
     ${EMAIL}
@@ -804,8 +804,8 @@ CKALIGNFAIL
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CKALIGNFAILCLN
     #PBS -S /bin/bash
-    #PBS -q $queue  
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
     #PBS -l $walltime
     ${EMAIL}
@@ -827,7 +827,8 @@ ALIGNWRAP
     #done fastq alignment && alignment jobs failure checking.
 
 fi
-jID_alignwrap=$( qstat | grep AlnWrp${groupname} | cut -d ' ' -f 1 )
+wait
+jID_alignwrap=$( qstat | grep AlnWrp${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
 if [ -z $merge ]
 then
     waitstring_mrgsrtwrp="#PBS -W depend=afterok:${jID_alignwrap}"
@@ -842,8 +843,8 @@ then
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<MRGSRTWRAP
     #PBS -S /bin/bash
-    #PBS -q $queue  
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=24gb
     #PBS -l $walltime
     ${EMAIL}
@@ -853,8 +854,8 @@ then
     #PBS -N MStWrp${groupname}
     ${waitstring_mrgsrtwrp}
     date +"%Y-%m-%d %H:%M:%S"
-    echo "all alignment done, all aplitting and alignment jobs succeeded!" 
-    jID_alnOK=\$( qstat | grep AlnOK_${groupname} | cut -d ' ' -f 1 )
+    echo "all alignment done, all aplitting and alignment jobs succeeded!"
+    jID_alnOK=\$( qstat | grep AlnOK_${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
     echo "jID_aln-OK job id is \$jID_alnOK "
     timestamp=\$(date +"%s" | cut -c 4-10)
     if [ -z $merge ]
@@ -868,8 +869,8 @@ then
     echo \${waitstring_alnOK}
     qsub <<MRGSRT
         #PBS -S /bin/bash
-        #PBS -q $queue  
-        #PBS -l nodes=1:ppn=1:AMD
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=24gb
         #PBS -l $walltime
         ${EMAIL}
@@ -892,14 +893,14 @@ then
             rm -r ${tmpdir}
         fi
 MRGSRT
-        jID_mrgsrt=\$( qstat | grep frgmrg${groupname} | cut -d ' ' -f 1 )
+        jID_mrgsrt=\$( qstat | grep frgmrg${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
 
         ##kill all remaining jobs if previous mergesort step exited with error
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<MRGSRTFAILCK
         #PBS -S /bin/bash
-        #PBS -q $queue  
-        #PBS -l nodes=1:ppn=1:AMD
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=2gb
         #PBS -l $walltime
         ${EMAIL}
@@ -911,13 +912,13 @@ MRGSRT
 
         date +"%Y-%m-%d %H:%M:%S"
         echo "Error with merging sorted files job, ${jID_mrgsort}, deleting all remaining jobs of this pipeline."
-        RemJob1=\$(qstat |grep "$groupname" |grep " Q \| H \| R " | awk 'BEGIN{FS=" "}{print $1}'| cut -d ' ' -f 1)
+        RemJob1=\$(qstat |grep "$groupname" |grep " Q \| H \| R " | awk 'BEGIN{FS=" "}{print $1}'| cut -d ' ' -f 1 | cut -d "." -f 1-2)
         qdel \${RemJob1}
 MRGSRTFAILCK
 MRGSRTWRAP
 fi
 wait
-jID_mrgsrtwrap=$( qstat| grep MStWrp${groupname} | cut -d ' ' -f 1 )
+jID_mrgsrtwrap=$( qstat| grep MStWrp${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
 if [ -z $dedup ]
 then
     waitstring_RDpWrp="#PBS -W depend=afterok:${jID_mrgsrtwrap}"
@@ -931,8 +932,8 @@ then
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<RMDUPWRAP
     #PBS -S /bin/bash
-    #PBS -q $queue  
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
     #PBS -l $walltime
     ${EMAIL}
@@ -943,7 +944,7 @@ then
     ${waitstring_RDpWrp}
     date +"%Y-%m-%d %H:%M:%S"
     echo ${waitstring_RDpWrp}
-    jID_mrgsrt=\$( qstat | grep frgmrg${groupname} | cut -d ' ' -f 1 )
+    jID_mrgsrt=\$( qstat | grep frgmrg${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
     if [ -z $dedup ]
     then
         waitstring_osplit="#PBS -W depend=afterok:\${jID_mrgsrt}"
@@ -953,8 +954,8 @@ then
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<RMDUPLICATE
         #PBS -S /bin/bash
-        #PBS -q $queue  
-        #PBS -l nodes=1:ppn=1:AMD
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=4gb
         #PBS -l $walltime
         ${EMAIL}
@@ -973,7 +974,7 @@ RMDUPLICATE
 RMDUPWRAP
 fi
 
-jID_rmdupwrap=$( qstat | grep RDpWrp${groupname} | cut -d ' ' -f 1 )
+jID_rmdupwrap=$( qstat | grep RDpWrp${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
 echo "jID_rmdupwrap ID: $jID_rmdupwrap"
 wait
 if [ -z "$genomePath" ]
@@ -1000,8 +1001,8 @@ then
         timestamp=$(date +"%s" | cut -c 4-10)
 		qsub <<SUPERWRAP1
         #PBS -S /bin/bash
-        #PBS -q $queue
-        #PBS -l nodes=1:ppn=1:AMD
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=1gb
         #PBS -l $walltime
         ${EMAIL}
@@ -1031,7 +1032,7 @@ then
         ${juiceDir}/scripts/launch_stats.sh
 SUPERWRAP1
     fi
-    jID_superwrap1="$( qstat | grep SpWrp1${groupname} | cut -d ' ' -f 1 )"
+    jID_superwrap1="$( qstat | grep SpWrp1${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )"
     wait
     if [ -z $postproc ]
     then
@@ -1043,9 +1044,9 @@ SUPERWRAP1
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<SUPERWRAP2
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
     #PBS -o ${logdir}/${timestamp}_super_wrap2_${groupname}.log
     #PBS -j oe
@@ -1066,7 +1067,7 @@ SUPERWRAP1
     export walltime=$walltime
     export long_walltime=$long_walltime
     export postproc=$postproc
-    jID_launch=\$(qstat | grep Lnch_${groupname} | cut -d ' ' -f 1)
+    jID_launch=\$(qstat | grep Lnch_${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2)
     echo \$jID_launch
     echo "waitstring3 is \${waitstring3}"
     ${juiceDir}/scripts/postprocessing.sh
@@ -1080,9 +1081,9 @@ else
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<FINCK2
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:AMD 
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=1gb
     #PBS -o ${logdir}/${timestamp}_prep_done_${groupname}.out
     #PBS -j oe
@@ -1092,15 +1093,15 @@ else
     #PBS -W depend=afterok:${jID_rmdupwrap}
     date +"%Y-%m-%d %H:%M:%S"
 
-    jID_osplit=\$( qstat | grep osplit${groupname} | cut -d ' ' -f 1 )
-    jID_rmsplit=\$( qstat | grep RmSplt${groupname} | cut -d ' ' -f 1)        
+    jID_osplit=\$( qstat | grep osplit${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
+    jID_rmsplit=\$( qstat | grep RmSplt${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2)
     wait
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<PREPDONE
         #PBS -S /bin/bash
-        #PBS -q $queue
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
         #PBS -l $walltime
-        #PBS -l nodes=1:ppn=1:AMD 
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=1gb
         #PBS -o ${logdir}/\${timestamp}_done_${groupname}.log
         #PBS -j oe

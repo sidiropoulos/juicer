@@ -17,7 +17,7 @@ echo "resolutions: $resolutions"
 echo "walltime: $walltime"
 echo "long_walltime: $long_walltime"
 echo $load_java
-jID_osplit=$( qstat | grep osplit${groupname} | cut -d ' ' -f 1 )
+jID_osplit=$( qstat | grep osplit${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
 
 if [ -z $final ]
 then
@@ -31,7 +31,7 @@ timestamp=$(date +"%s" | cut -c 4-10)
 qsub <<DOSTAT
 #PBS -S /bin/bash
 #PBS -q batch
-#PBS -l nodes=1:ppn=1:AMD
+#PBS -l nodes=1:ppn=1:thinnode
 #PBS -l mem=1gb
 #PBS -l $walltime
 #PBS -o ${logdir}/${timestamp}_launch_${groupname}.log
@@ -41,8 +41,8 @@ ${waitstring2}
 
 date +"%Y-%m-%d %H:%M:%S"
 echo "Alignment and merge done, launching the stats job"
-#jID_osplit=\$( qstat | grep osplit${groupname} | cut -d ' ' -f 1 )
-jID_rmsplit=\$( qstat | grep RmSplt${groupname} | cut -d ' ' -f 1)
+#jID_osplit=\$( qstat | grep osplit${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
+jID_rmsplit=\$( qstat | grep RmSplt${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2)
 
 if [ -z $final ]
 then
@@ -56,8 +56,8 @@ timestamp=\$(date +"%s" | cut -c 4-10)
 echo "start sbumitting stats job"
 qsub <<STATS0
 	#PBS -S /bin/bash
-	#PBS -q $queue
-	#PBS -l nodes=1:ppn=1:AMD
+	#PBS -q $queue -W group_list=cu_10027 -A cu_10027
+	#PBS -l nodes=1:ppn=1:thinnode
 	#PBS -l mem=20gb
 	#PBS -l $walltime
 	\${waitstring22}
@@ -80,8 +80,8 @@ STATS0
 
 qsub <<STATS30
 	#PBS -S /bin/bash
-	#PBS -q $queue
-	#PBS -l nodes=1:ppn=1:AMD
+	#PBS -q $queue -W group_list=cu_10027 -A cu_10027
+	#PBS -l nodes=1:ppn=1:thinnode
 	#PBS -l mem=20gb
 	#PBS -l $walltime
 	#PBS -o ${logdir}/\${timestamp}_stats_${groupname}.log
@@ -104,8 +104,8 @@ STATS30
 
 qsub <<- ABNORMAL
 	#PBS -S /bin/bash
-	#PBS -q $queue
-	#PBS -l nodes=1:ppn=1:AMD
+	#PBS -q $queue -W group_list=cu_10027 -A cu_10027
+	#PBS -l nodes=1:ppn=1:thinnode
 	#PBS -l mem=60gb
 	#PBS -l $long_walltime
 	#PBS -o ${logdir}/\${timestamp}_abnormal_${groupname}.log
@@ -118,7 +118,7 @@ qsub <<- ABNORMAL
 	awk -f ${juiceDir}/scripts/collisions.awk $outputdir/abnormal.sam > $outputdir/collisions.txt
 ABNORMAL
 
-jID_stats0=\$( qstat | grep stats0${groupname} | cut -d ' ' -f 1)
+jID_stats0=\$( qstat | grep stats0${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2)
 
 wait
 echo "this is the value of jID_stats: \${jID_stats}"
@@ -126,8 +126,8 @@ timestamp=\$(date +"%s" | cut -c 4-10)
 echo "start submitting hic job"
 qsub <<- HICWORK
 	#PBS -S /bin/bash
-	#PBS -q $queue
-	#PBS -l nodes=1:ppn=1:AMD
+	#PBS -q $queue -W group_list=cu_10027 -A cu_10027
+	#PBS -l nodes=1:ppn=1:thinnode
 	#PBS -l mem=60gb
 	#PBS -l $long_walltime
 	#PBS -o ${logdir}/\${timestamp}_hic0_${groupname}.log
@@ -146,13 +146,13 @@ qsub <<- HICWORK
 		${juiceDir}/scripts/juicer_tools pre -f $site_file -s $outputdir/inter.txt -g $outputdir/inter_hists.m -q 1 $outputdir/merged_nodups.txt $outputdir/inter.hic $genomePath
 	fi
 HICWORK
-jID_stats30=\$( qstat | grep stats30${groupname} | cut -d ' ' -f 1)
+jID_stats30=\$( qstat | grep stats30${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2)
 timestamp=\$(date +"%s" | cut -c 4-10)
 echo "start submitting hic30 job"
 qsub <<- HIC30WORK
 	#PBS -S /bin/bash
-	#PBS -q $queue
-	#PBS -l nodes=1:ppn=1:AMD
+	#PBS -q $queue -W group_list=cu_10027 -A cu_10027
+	#PBS -l nodes=1:ppn=1:thinnode
 	#PBS -l mem=60gb
 	#PBS -l $long_walltime
 	#PBS -o ${logdir}/\${timestamp}_hic30_${groupname}.log

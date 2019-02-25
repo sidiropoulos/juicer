@@ -36,9 +36,9 @@ read1=${splitdir}"/*${read1str}*.fastq"
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<ALIGNWRAP
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=2gb
     #PBS -o ${logdir}/${timestamp}_alnwrap_${groupname}.log
     #PBS -j oe
@@ -62,9 +62,9 @@ read1=${splitdir}"/*${read1str}*.fastq"
         fi
        qsub <<- MRGALL
         #PBS -S /bin/bash
-        #PBS -q $queue
+        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
         #PBS -l $long_walltime
-        #PBS -l nodes=1:ppn=1:AMD
+        #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=24gb
         #PBS -M mzhibo@uga.edu
         #PBS -m a
@@ -111,9 +111,9 @@ MRGALL
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CHIMERIC
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=24gb
     #PBS -M mzhibo@uga.edu
     #PBS -m a
@@ -180,8 +180,8 @@ CHIMERIC
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CKALIGNFAIL
     #PBS -S /bin/bash
-    #PBS -q $queue  
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=2gb
     #PBS -l $walltime
     #PBS -M mzhibo@uga.edu
@@ -198,8 +198,8 @@ CKALIGNFAIL
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CKALIGNFAILCLN
     #PBS -S /bin/bash
-    #PBS -q $queue  
-    #PBS -l nodes=1:ppn=1:AMD
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
     #PBS -l $walltime
     #PBS -M mzhibo@uga.edu

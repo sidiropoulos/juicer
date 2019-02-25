@@ -187,7 +187,7 @@ qsub -o ${logdir}/header.log -j oe -q batch -N ${groupname}_cmd <<-EOF
   echo "$0 $@"
 EOF
 
-jid1=$(qsub -o ${logdir}/topstats.log -j oe -N ${groupname}_Tstats -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:AMD -q batch <<-TOPSTATS
+jid1=$(qsub -o ${logdir}/topstats.log -j oe -N ${groupname}_Tstats -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -q batch <<-TOPSTATS
 export LC_ALL=C
 if ! awk -f ${juiceDir}/scripts/makemega_addstats.awk ${inter_names} > ${outputdir}/inter.txt
 then  
@@ -200,7 +200,7 @@ TOPSTATS
 )
 jobIDstr=${jid1}
 # Merge all merged_nodups.txt files found under current dir
-jid2=$(qsub -o ${logdir}/merge.log -j oe -q batch -N ${groupname}_merge -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:AMD <<- MRGSRT
+jid2=$(qsub -o ${logdir}/merge.log -j oe -q batch -N ${groupname}_merge -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode <<- MRGSRT
 if ! sort -T ${tmpdir} -m -k2,2d -k6,6d ${merged_names} > ${outputdir}/merged_nodups.txt
 then 
 echo "***! Some problems occurred somewhere in merging sorted merged_nodups files."
@@ -214,21 +214,21 @@ MRGSRT
 jobIDstr="${jobIDstr}:${jid2}"
 
 # Create statistics files for MQ > 0
-jid3=$(qsub -o ${logdir}/inter0.log -j oe -q batch -N ${groupname}_inter0 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:AMD -W depend=afterok:${jid1}:${jid2} <<- INTER0
+jid3=$(qsub -o ${logdir}/inter0.log -j oe -q batch -N ${groupname}_inter0 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid1}:${jid2} <<- INTER0
 ${juiceDir}/scripts/statistics.pl -q 1 -o${outputdir}/inter.txt -s $site_file -l $ligation ${outputdir}/merged_nodups.txt
 INTER0
 )
 jobIDstr="${jobIDstr}:${jid3}"
 
 # Create statistics files for MQ > 30
-jid4=$(qsub -o ${logdir}/inter30.log -j oe -q batch -N ${groupname}_inter30 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:AMD -W depend=afterok:${jid1}:${jid2}  <<- INTER30
+jid4=$(qsub -o ${logdir}/inter30.log -j oe -q batch -N ${groupname}_inter30 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid1}:${jid2}  <<- INTER30
 ${juiceDir}/scripts/statistics.pl -q 30 -o${outputdir}/inter_30.txt -s $site_file -l $ligation ${outputdir}/merged_nodups.txt 
 INTER30
 )
 jobIDstr="${jobIDstr}:${jid4}"
 
 # Create HIC maps file for MQ > 0
-jid5=$(qsub -o ${logdir}/hic0_${groupname}.log -j oe -q batch -M ${EMAIL} -m ae -N ${groupname}_hic0 -l mem=40gb -l walltime=168:00:00 -l nodes=1:ppn=1:AMD -W depend=afterok:${jid4} <<- HIC0
+jid5=$(qsub -o ${logdir}/hic0_${groupname}.log -j oe -q batch -M ${EMAIL} -m ae -N ${groupname}_hic0 -l mem=40gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC0
 $load_java
 if [ -z "$exclude" ]
 then
@@ -242,7 +242,7 @@ HIC0
 )
 jobIDstr="${jobIDstr}:${jid5}"
 # Create HIC maps file for MQ > 30
-jid6=$(qsub -o ${logdir}/hic30_${groupname}.log -j oe -q batch -M ${EMAIL} -m ae -N ${groupname}_hic30 -l mem=60gb -l walltime=168:00:00 -l nodes=1:ppn=1:AMD -W depend=afterok:${jid4} <<- HIC30
+jid6=$(qsub -o ${logdir}/hic30_${groupname}.log -j oe -q batch -M ${EMAIL} -m ae -N ${groupname}_hic30 -l mem=60gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC30
 $load_java
 if [ -z "${exclude}" ]
 then

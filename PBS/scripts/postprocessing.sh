@@ -1,5 +1,5 @@
 #!/bin/bash
-jID_launch=$( qstat | grep Lnch_${groupname} | cut -d ' ' -f 1 )
+jID_launch=$( qstat | grep Lnch_${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
 if [ -z $postproc ]
 then
     waitstring3="#PBS -W depend=afterok:${jID_launch}"
@@ -9,9 +9,9 @@ echo "waitstring3 is: ${waitstring3}"
 timestamp=$(date +"%s" | cut -c 4-10)
 qsub <<- POSTPROCWRAP
 #PBS -S /bin/bash
-#PBS -q $queue
+#PBS -q $queue -W group_list=cu_10027 -A cu_10027
 #PBS -l $walltime
-#PBS -l nodes=1:ppn=1:AMD
+#PBS -l nodes=1:ppn=1:thinnode
 #PBS -l mem=4gb
 #PBS -o ${logdir}/${timestamp}_postproc_wrap_${groupname}.log
 #PBS -j oe
@@ -20,20 +20,20 @@ ${waitstring3}
 
 date +"%Y-%m-%d %H:%M:%S"
 
-jID_hic30=\$(qstat | grep hic30_${groupname} |cut -d ' ' -f 1)
+jID_hic30=\$(qstat | grep hic30_${groupname} |cut -d ' ' -f 1 | cut -d "." -f 1-2)
 
 if [ -z $postproc ]
 then
-    waitstring4="#PBS -W depend=afterok:\${jID_hic30}" 
+    waitstring4="#PBS -W depend=afterok:\${jID_hic30}"
 fi
 echo "waitstring4 is : \${waitstring4}"
 
 timestamp=\$(date +"%s" | cut -c 4-10)
 qsub <<POSTPROCESS
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $long_walltime
-    #PBS -l nodes=1:ppn=1:gpus=1:GPU 
+    #PBS -l nodes=1:ppn=1:gpus=1:GPU
     #PBS -l mem=60gb
     #PBS -o ${logdir}/\${timestamp}_postproc_${groupname}.log
     #PBS -j oe
@@ -43,7 +43,7 @@ qsub <<POSTPROCESS
     date +"%Y-%m-%d %H:%M:%S"
     $load_java
     $load_cuda
-    module list 
+    module list
     export _JAVA_OPTIONS=-Xmx16384m
     export LC_ALL=en_US.UTF-8
 
@@ -52,25 +52,25 @@ qsub <<POSTPROCESS
 POSTPROCESS
 POSTPROCWRAP
 
-jID_postprocwrap=$( qstat |grep PPrWrp${groupname} | cut -d ' ' -f 1 )
+jID_postprocwrap=$( qstat |grep PPrWrp${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
 echo $jID_postprowrap
 wait
 timestamp=$(date +"%s" | cut -c 4-10)
 qsub <<- FINCK
 #PBS -S /bin/bash
-#PBS -q $queue  
+#PBS -q $queue -W group_list=cu_10027 -A cu_10027
 #PBS -l $walltime
 #PBS -o ${logdir}/${timestamp}_prep_done_${groupname}.log
 #PBS -j oe
 #PBS -N Pdone_${groupname}
 #PBS -W depend=afterok:${jID_postprocwrap}
 
-date +"%Y-%m-%d %H:%M:%S"    
-jID_hic30=\$(qstat | grep hic30_${groupname} |cut -d ' ' -f 1)
-jID_stats0=\$(qstat | grep stats0${groupname} |cut -d ' ' -f 1)
-jID_stats30=\$(qstat | grep stats30${groupname} |cut -d ' ' -f 1)
-jID_hic=\$(qstat | grep hic0_${groupname} |cut -d ' ' -f 1)
-jID_postproc=\$(qstat | grep PProc_${groupname} |cut -d ' ' -f 1)
+date +"%Y-%m-%d %H:%M:%S"
+jID_hic30=\$(qstat | grep hic30_${groupname} |cut -d ' ' -f 1 | cut -d "." -f 1-2)
+jID_stats0=\$(qstat | grep stats0${groupname} |cut -d ' ' -f 1 | cut -d "." -f 1-2)
+jID_stats30=\$(qstat | grep stats30${groupname} |cut -d ' ' -f 1 | cut -d "." -f 1-2)
+jID_hic=\$(qstat | grep hic0_${groupname} |cut -d ' ' -f 1 | cut -d "." -f 1-2)
+jID_postproc=\$(qstat | grep PProc_${groupname} |cut -d ' ' -f 1 | cut -d "." -f 1-2)
 
 waitstring5="#PBS -W depend=afterok:\${jID_postproc}"
 if [ -z $postproc ]
@@ -80,16 +80,16 @@ fi
 timestamp=\$(date +"%s" | cut -c 4-10)
 qsub <<DONE
     #PBS -S /bin/bash
-    #PBS -q $queue
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:AMD 
+    #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
     #PBS -o ${logdir}/\${timestamp}_done_${groupname}.log
     #PBS -j oe
     #PBS -N done_${groupname}
     \${waitstring5}
 
-    date +"%Y-%m-%d %H:%M:%S"    
+    date +"%Y-%m-%d %H:%M:%S"
     export splitdir=${splitdir}
     export outputdir=${outputdir}
     ${juiceDir}/scripts/check.sh
