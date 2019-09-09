@@ -131,7 +131,7 @@ about=""
 nofrag=0
 
 ## Read arguments
-usageHelp="Usage: ${0##*/} [-W group_list=genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-r] [-h] [-x]"
+usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-r] [-h] [-x]"
 genomeHelp="* [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \n  \"$genomeID\"); alternatively, it can be defined using the -z command"
 dirHelp="* [topDir] is the top level directory (default\n  \"$topDir\")\n     [topDir]/fastq must contain the fastq files\n     [topDir]/splits will be created to contain the temporary split files\n     [topDir]/aligned will be created for the final alignment"
 queueHelp="* [queue] is the queue for running alignments (default \"$queue\")"
@@ -251,7 +251,12 @@ case $site in
     HindIII) ligation="AAGCTAGCTT";;
     DpnII) ligation="GATCGATC";;
     MboI) ligation="GATCGATC";;
+    Csp6I) ligation="GTATAC";;
     NcoI) ligation="CCATGCATGG";;
+    MseI) ligation="TTATAA";;
+    Csp6I_MseI) ligation="TTATAA";;
+    Csp6I_MboI) ligation="GATCGATC";;
+    MboI_MseI) ligation="TTATAA";;
     none) ligation="XXXX";;
     *)  ligation="XXXX"
     echo "$site not listed as recognized enzyme. Using $site_file as site file"
@@ -357,6 +362,8 @@ fastqsize=$(ls -lL ${fastqdir} | awk '{sum+=$5}END{print sum}')
 if [ "$fastqsize" -gt "2592410750" ]
 then
     threads=16
+else
+    threads=4
 fi
 
 testname=$(ls -l ${fastqdir} | awk 'NR==1;{print $9}')
@@ -809,7 +816,7 @@ CKALIGNFAIL
     #PBS -l mem=4gb
     #PBS -l $walltime
     ${EMAIL}
-    #PBS -m a
+    #PBS -m b
     #PBS -o ${logdir}/\${timestamp}_alignfailclean_${groupname}.log
     #PBS -j oe
     #PBS -W depend=afternotok\${jobIDstring}
@@ -904,7 +911,7 @@ MRGSRT
         #PBS -l mem=2gb
         #PBS -l $walltime
         ${EMAIL}
-        #PBS -m a
+        #PBS -m b
         #PBS -o ${logdir}/\${timestamp}_clean1_${groupname}.log
         #PBS -j oe
         #PBS -N clean1${groupname}
