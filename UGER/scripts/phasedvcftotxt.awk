@@ -62,14 +62,19 @@ $0 !~ /^#/ {
         for (j=1; j <=length(alt); j++) {
             if (length(alt[j]) > 1) toolong=1;
         }
-        # only interested in single base SNPs, not indels
-        if (a[1] ~ /\// && length($4)==1 && !toolong) {
+        # only interested in phased SNPs, not indels
+        if (a[1] ~ /\|/ && length($4)==1 && !toolong) {
             # position 0 in phase corresponds to ref
             alt[0]=$4;
-            split(a[1], gt, "/");
-            # position is heterozygous
+            split(a[1], gt, "|");
+            if (gt[1] == 1) {
+              gt[1]=0;
+              gt[2]=1;
+            }
+            # phase is different
             if (gt[1] != gt[2]) {
-                print $1":"$2, alt[gt[1]], alt[gt[2]] >> samples[i]"_heterozygous_positions.txt";
+                # first allele is "paternal" and listed first
+                print $1":"$2, alt[gt[1]], alt[gt[2]] >> samples[i]"_paternal_maternal.txt";
                 # new chromosome
                 if ($1 != prev) {
                     if (prev =="notset") {
