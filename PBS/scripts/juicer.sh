@@ -99,7 +99,7 @@ long_walltime="walltime=120:00:00"
 # give your email address to be used in #PBS -M to receive notifications when job error occurs.
 # Must be either set with an email address or skipped
 # This email is not included in the launch stat and postprocessing steps, add manually if needed
-EMAIL='#PBS -M nikos@finsenlab.dk'
+# EMAIL='#PBS -M nikos@finsenlab.dk'
 splitsize=90000000
 # fastq files should look like filename_R1.fastq and filename_R2.fastq
 # if your fastq files look different, change this value
