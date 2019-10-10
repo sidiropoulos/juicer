@@ -67,14 +67,23 @@ qsub <<STATS0
 
 	date +"%Y-%m-%d %H:%M:%S"
 	$load_java
-	export _JAVA_OPTIONS=-Xmx16384m; 
+	export _JAVA_OPTIONS=-Xmx16384m;
 	export LC_ALL=en_US.UTF-8
+	module rm R
+	module load intel/redist/2019_update2
+        module load intel/perflibs/64
+        module load R/3.5.0
 
-	tail -n1 $headfile | awk '{printf"%-1000s\n", \\\$0}' > $outputdir/inter.txt 
+        module use /home/projects/cu_10027/apps/modulefiles
+        module load juicerstats/0.0.1
+
+	tail -n1 $headfile | awk '{printf"%-1000s\n", \\\$0}' > $outputdir/inter.txt
 	${juiceDir}/scripts/statistics.pl -s $site_file -l $ligation -o $outputdir/stats_dups.txt $outputdir/dups.txt
 	cat $splitdir/*.res.txt | awk -f ${juiceDir}/scripts/stats_sub.awk >> $outputdir/inter.txt
 	java -cp ${juiceDir}/scripts/ LibraryComplexity $outputdir inter.txt >> $outputdir/inter.txt
 	${juiceDir}/scripts/statistics.pl -s $site_file -l $ligation -o $outputdir/inter.txt -q 1 $outputdir/merged_nodups.txt
+
+	juicerstats -i $outputdir/inter.txt -o $outputdir/inter.pdf
 
 STATS0
 
@@ -88,16 +97,26 @@ qsub <<STATS30
 	#PBS -j oe
 	#PBS -N stats30${groupname}
 	\${waitstring22}
-	
+
 	date +"%Y-%m-%d %H:%M:%S"
 	$load_java
-	export _JAVA_OPTIONS=-Xmx16384m; 
+	export _JAVA_OPTIONS=-Xmx16384m;
 	export LC_ALL=en_US.UTF-8
-	echo -e 'Experiment description: $about' > $outputdir/inter_30.txt; 
-	tail -n1 $headfile | awk '{printf"%-1000s\n", \\\$0}' > $outputdir/inter_30.txt 
+
+        module rm R
+        module load intel/redist/2019_update2
+        module load intel/perflibs/64
+	module load R/3.5.0
+        module use /home/projects/cu_10027/apps/modulefiles
+        module load juicerstats/0.0.1
+
+	echo -e 'Experiment description: $about' > $outputdir/inter_30.txt;
+	tail -n1 $headfile | awk '{printf"%-1000s\n", \\\$0}' > $outputdir/inter_30.txt
 	cat $splitdir/*.res.txt | awk -f ${juiceDir}/scripts/stats_sub.awk >> $outputdir/inter_30.txt
 	java -cp ${juiceDir}/scripts/ LibraryComplexity $outputdir inter_30.txt >> $outputdir/inter_30.txt
 	${juiceDir}/scripts/statistics.pl -s $site_file -l $ligation -o $outputdir/inter_30.txt -q 30 $outputdir/merged_nodups.txt
+
+	juicerstats -i $outputdir/inter_30.txt -o $outputdir/inter_30.pdf
 
 STATS30
 
