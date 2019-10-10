@@ -85,7 +85,7 @@ load_cuda="module load cuda75/toolkit/7.5.18"
 
 # Juicer directory, contains scripts/, references/, and restriction_sites/
 # can also be set in options via -D
-juiceDir=""
+juiceDir="/home/projects/cu_10027/apps/software/juicer"
 # default queue, can also be set in options via -q
 queue="batch"
 # default queue time, can also be set in options via -Q
@@ -274,6 +274,7 @@ fi
 case $shortreadend in
     0) ;;
     1) ;;
+
     2) ;;
     *)    echo "$usageHelp"
     echo "$shortHelp2"
@@ -1126,4 +1127,3 @@ FINCK2
 
 fi
 echo "Finished adding all jobs... please wait while processing."
-
