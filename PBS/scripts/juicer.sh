@@ -128,10 +128,10 @@ genomeID="hg19"
 shortreadend=0
 # description, default empty
 about=""
-nofrag=0
+nofrag=1
 
 ## Read arguments
-usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-r] [-h] [-x]"
+usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-r] [-h] [-f]"
 genomeHelp="* [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \n  \"$genomeID\"); alternatively, it can be defined using the -z command"
 dirHelp="* [topDir] is the top level directory (default\n  \"$topDir\")\n     [topDir]/fastq must contain the fastq files\n     [topDir]/splits will be created to contain the temporary split files\n     [topDir]/aligned will be created for the final alignment"
 queueHelp="* [queue] is the queue for running alignments (default \"$queue\")"
@@ -148,7 +148,7 @@ scriptDirHelp="* [Juicer scripts directory]: set the Juicer directory,\n  which 
 refSeqHelp="* [reference genome file]: enter path for reference sequence file, BWA index\n  files must be in same directory"
 queueTimeHelp="* [queue time limit]: time limit for queue, i.e. -l 12:00 is 12 hours\n  (default ${walltime})"
 longQueueTimeHelp="* [long queue time limit]: time limit for long queue, i.e. -l 168:00 is one week\n  (default ${long_walltime})"
-excludeHelp="* -x: exclude fragment-delimited maps from hic file creation"
+excludeHelp="* -f: include fragment-delimited maps in hic file creation"
 helpHelp="* -h: print this help and exit"
 
 printHelpAndExit() {
@@ -193,7 +193,7 @@ while getopts "d:g:R:k:a:hrq:s:p:l:y:z:S:C:D:Q:L:x" opt; do
     D) juiceDir=$OPTARG ;;
     Q) walltime=$OPTARG ;;
     L) long_walltime=$OPTARG ;;
-    x) nofrag=1 ;; #no fragment maps
+    f) nofrag=0 ;;
     [?]) printHelpAndExit 1;;
     esac
 done
@@ -724,7 +724,7 @@ MRGALL
     #PBS -S /bin/bash
     #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:thinnode
+    #PBS -l nodes=1:ppn=4:thinnode
     #PBS -l mem=24gb
     ${EMAIL}
     #PBS -m a
@@ -765,7 +765,7 @@ MRGALL
         exit 1
     fi
     # sort by chromosome, fragment, strand, and position
-    sort -T $tmpdir -k2,2d -k6,6d -k4,4n -k8,8n -k1,1n -k5,5n -k3,3n \${name}\${ext}.frag.txt > \${name}\${ext}.sort.txt
+    sort -T $tmpdir --parallel=4 -k2,2d -k6,6d -k4,4n -k8,8n -k1,1n -k5,5n -k3,3n \${name}\${ext}.frag.txt > \${name}\${ext}.sort.txt
     if [ \$? -ne 0 ]
     then
         echo "***! Failure during sort of \${name}\${ext}"
