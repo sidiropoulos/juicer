@@ -48,6 +48,8 @@ juiceDir="/home/projects/cu_10027/apps/software/juicer"
 # unique name for jobs in this run
 groupname="C$(date +"%s"|cut -c 6-11)"
 
+# email
+EMAIL="-M nikos@finsenlab.dk -m ae"
 
 ## Default options, overridden by command line arguments
 
@@ -57,14 +59,15 @@ topDir=$(pwd)
 site="MboI"
 # genome ID, default to human, can also be set in options
 genomeID="hg19"
+resolutions="2500000,1000000,500000,250000,100000,50000,25000,10000,5000,2500,1000"
 
 ## Read arguments
-usageHelp="Usage: ${0##*/} -g genomeID [-d topDir] [-s site] [-r resolutions] [-hx]"
-genomeHelp="   genomeID must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \"$genomeID\")"
+usageHelp="Usage: ${0##*/} -g genomeID [-d topDir] [-s site] [-r resolutions] [-hf]"
+genomeHelp="   [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \"$genomeID\")"
 dirHelp="   [topDir] is the top level directory (default \"$topDir\") and must contain links to all merged_nodups files underneath it"
 siteHelp="   [site] must be defined in the script, e.g.  \"HindIII\" or \"MboI\" (default \"$site\"); alternatively, this can be the restriction site file"
 resolutionsHelp="   [resolutions] is a comma-delimited list of resolutions, such as 10000,5000,1000,5f (default is 2.5M,1M,500K,250K,100K,50K,25K,10K,5K in base pair and 500f,250f,100f,50f,25f,10f,5f,2f,1f)"
-excludeHelp="   -x: exclude fragment-delimited maps from Hi-C mega map (will run much faster)"
+excludeHelp="   -f: include fragment-delimited maps in Hi-C mega map"
 helpHelp="   -h: print this help and exit"
 
 printHelpAndExit() {
@@ -84,7 +87,7 @@ while getopts "d:g:r:h:x:s" opt; do
 	h) printHelpAndExit 0;;
 	d) topDir=$OPTARG ;;
 	s) site=$OPTARG ;;
-	x) exclude=1 ;;
+	f) exclude=0 ;;
 	r) resolutions=$OPTARG ;;
 	[?]) printHelpAndExit 1;;
     esac
@@ -200,8 +203,8 @@ TOPSTATS
 )
 jobIDstr=${jid1}
 # Merge all merged_nodups.txt files found under current dir
-jid2=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/merge.log -j oe -q batch -N ${groupname}_merge -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode <<- MRGSRT
-if ! sort -T ${tmpdir} -m -k2,2d -k6,6d ${merged_names} > ${outputdir}/merged_nodups.txt
+jid2=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/merge.log -j oe -q batch -N ${groupname}_merge -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=12:thinnode <<- MRGSRT
+if ! sort --parallel=12 -T ${tmpdir} -m -k2,2d -k6,6d ${merged_names} > ${outputdir}/merged_nodups.txt
 then
 echo "***! Some problems occurred somewhere in merging sorted merged_nodups files."
     exit 100
@@ -228,7 +231,7 @@ INTER30
 jobIDstr="${jobIDstr}:${jid4}"
 
 # Create HIC maps file for MQ > 0
-jid5=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hic0_${groupname}.log -j oe -q batch -M ${EMAIL} -m ae -N ${groupname}_hic0 -l mem=40gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC0
+jid5=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hic0_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic0 -l mem=40gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC0
 $load_java
 if [ -z "$exclude" ]
 then
@@ -242,7 +245,7 @@ HIC0
 )
 jobIDstr="${jobIDstr}:${jid5}"
 # Create HIC maps file for MQ > 30
-jid6=$(qsub -o ${logdir}/hic30_${groupname}.log -j oe -q batch -M ${EMAIL} -m ae -N ${groupname}_hic30 -l mem=60gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC30
+jid6=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hic30_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic30 -l mem=60gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC30
 $load_java
 if [ -z "${exclude}" ]
 then
