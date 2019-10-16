@@ -65,7 +65,13 @@ BEGIN{
 END {
 	sname=sprintf("%s_msplit%04d_", groupname, name);
 	print "This is the begining of END step, submitting _dedup job in END step";
-	sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -W depend=afterok:%s <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
+
+	if (name == 0 ){
+		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s  <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, juicedir, dir, sname, dir, name, dir, name);
+	}
+	else {
+		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -W depend=afterok:%s <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
+	}
 	system(sysstring2);
 
 	cmd2=sprintf("qstat | grep DDuP%s%s | cut -d ' ' -f 1 | cut -d '.' -f 1-2",name,groupname);
