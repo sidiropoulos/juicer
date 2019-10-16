@@ -70,7 +70,7 @@ END {
 		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s  <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, juicedir, dir, sname, dir, name, dir, name);
 	}
 	else {
-	sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -W depend=afterok:%s <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
+		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -W depend=afterok:%s <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
 	}
 	system(sysstring2);
 
