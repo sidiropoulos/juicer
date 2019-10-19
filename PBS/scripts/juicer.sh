@@ -106,7 +106,6 @@ splitsize=90000000
 read1str="_R1"
 read2str="_R2"
 
-
 # unique groupname for jobs submitted in each run. lab initial with an timestamp
 # Length of $groupname in this PBS version needs to be no longer than 8 characters.
 # Groupname Length limitatioin is critical, because jobID will be obtained through qstat output using jobName.
@@ -129,6 +128,16 @@ shortreadend=0
 # description, default empty
 about=""
 nofrag=1
+
+# is juicer ran on computerome?
+isCROME=$(hostname | awk '{if ($1~/computerome/){print 1}else {print 0}}')
+
+if [ $isCROME -eq 1 ]
+then
+  groupcharge="-W group_list=cu_10027 -A cu_10027"
+else
+  groupcharge=""
+fi
 
 ## Read arguments
 usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-r] [-h] [-f]"
@@ -403,7 +412,7 @@ then
                 timestamp=$(date +"%s" | cut -c 4-10)
                 jID_split=$(qsub <<SPLITEND
                 #PBS -S /bin/bash
-                #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+                #PBS -q $queue $groupcharge
                 #PBS -l $walltime
                 #PBS -l nodes=1:ppn=1:thinnode
                 #PBS -l mem=20gb
@@ -429,7 +438,7 @@ SPLITEND
             timestamp=$(date +"%s" | cut -c 4-10)
             jID_splitmv=$(qsub << SPLITMV
             #PBS -S /bin/bash
-            #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+            #PBS -q $queue $groupcharge
             #PBS -l $walltime
             #PBS -l nodes=1:ppn=1:thinnode
             #PBS -l mem=20gb
@@ -469,7 +478,7 @@ SPLITMV
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<ALIGNWRAP
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l $walltime
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=6gb
@@ -499,7 +508,7 @@ SPLITMV
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<-CNTLIG
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l $walltime
         #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=4gb
@@ -544,7 +553,7 @@ CNTLIG
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<ALGNR1
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l $walltime
         #PBS -l nodes=1:ppn=${threads}:thinnode
         #PBS -l mem=\${alloc_mem}
@@ -595,7 +604,7 @@ ALGNR1
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<ALGNR2
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l $walltime
         #PBS -l nodes=1:ppn=${threads}:thinnode
         #PBS -l mem=\$alloc_mem
@@ -646,7 +655,7 @@ ALGNR2
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<- MRGALL
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l $long_walltime
         #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=24gb
@@ -722,7 +731,7 @@ MRGALL
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CHIMERIC
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l $walltime
     #PBS -l nodes=1:ppn=4:thinnode
     #PBS -l mem=24gb
@@ -794,7 +803,7 @@ CHIMERIC
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CKALIGNFAIL
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=2gb
     #PBS -l $walltime
@@ -812,7 +821,7 @@ CKALIGNFAIL
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<- CKALIGNFAILCLN
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
     #PBS -l $walltime
@@ -851,7 +860,7 @@ then
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<MRGSRTWRAP
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=24gb
     #PBS -l $walltime
@@ -877,7 +886,7 @@ then
     echo \${waitstring_alnOK}
     qsub <<MRGSRT
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=24gb
         #PBS -l $walltime
@@ -907,7 +916,7 @@ MRGSRT
         timestamp=\$(date +"%s" | cut -c 4-10)
         qsub <<MRGSRTFAILCK
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=2gb
         #PBS -l $walltime
@@ -940,7 +949,7 @@ then
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<RMDUPWRAP
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
     #PBS -l $walltime
@@ -962,7 +971,7 @@ then
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<RMDUPLICATE
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=4gb
         #PBS -l $walltime
@@ -976,7 +985,7 @@ then
         date +"%Y-%m-%d %H:%M:%S"
         echo "Sucess: All mergefragments jobs were successfully finished!"
         echo "now starts to remove duplicates from the big sorted file"
-        awk -v queue=${long_queue} -v outfile=${logdir}/\${timestamp}_awksplit_rmdunps -v juicedir=${juiceDir} -v dir=$outputdir -v groupname=$groupname -v walltime=$long_walltime -f ${juiceDir}/scripts/split_rmdups.awk $outputdir/merged_sort.txt
+        awk -v queue=${long_queue} -v outfile=${logdir}/\${timestamp}_awksplit_rmdunps -v juicedir=${juiceDir} -v dir=$outputdir -v groupname=$groupname -v groupcharge=${groupcharge} -v walltime=$long_walltime -f ${juiceDir}/scripts/split_rmdups.awk $outputdir/merged_sort.txt
 RMDUPLICATE
 
 RMDUPWRAP
@@ -1009,7 +1018,7 @@ then
         timestamp=$(date +"%s" | cut -c 4-10)
 		qsub <<SUPERWRAP1
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=1gb
         #PBS -l $walltime
@@ -1052,9 +1061,9 @@ SUPERWRAP1
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<SUPERWRAP2
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l $walltime
-    #PBS -l nodes=1:ppn=1:thinnode
+    #PBS -l nodes=1:ppn=${threads}:thinnode
     #PBS -l mem=4gb
     #PBS -o ${logdir}/${timestamp}_super_wrap2_${groupname}.log
     #PBS -j oe
@@ -1071,6 +1080,7 @@ SUPERWRAP1
     export outputdir=$outputdir
     export logdir=${logdir}
     export splitdir=$splitdir
+    export groupcharge=${groupcharge}
     export queue=$queue
     export walltime=$walltime
     export long_walltime=$long_walltime
@@ -1089,7 +1099,7 @@ else
     timestamp=$(date +"%s" | cut -c 4-10)
     qsub <<FINCK2
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l $walltime
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=1gb
@@ -1107,7 +1117,7 @@ else
     timestamp=\$(date +"%s" | cut -c 4-10)
     qsub <<PREPDONE
         #PBS -S /bin/bash
-        #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+        #PBS -q $queue $groupcharge
         #PBS -l $walltime
         #PBS -l nodes=1:ppn=1:thinnode
         #PBS -l mem=1gb

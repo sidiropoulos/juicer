@@ -61,6 +61,16 @@ site="MboI"
 genomeID="hg19"
 resolutions="2500000,1000000,500000,250000,100000,50000,25000,10000,5000,2500,1000"
 
+# is juicer ran on computerome?
+isCROME=$(hostname | awk '{if ($1~/computerome/){print 1}else {print 0}}')
+
+if [ $isCROME -eq 1 ]
+then
+  groupcharge="-W group_list=cu_10027 -A cu_10027"
+else
+  groupcharge=""
+fi
+
 ## Read arguments
 usageHelp="Usage: ${0##*/} -g genomeID [-d topDir] [-s site] [-r resolutions] [-hf]"
 genomeHelp="   [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \"$genomeID\")"
@@ -184,13 +194,13 @@ fi
 
 ## Arguments have been checked and directories created. Now begins
 ## the real work of the pipeline
-qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/header.log -j oe -q batch -N ${groupname}_cmd <<-EOF
+qsub ${groupcharge} -o ${logdir}/header.log -j oe -q batch -N ${groupname}_cmd <<-EOF
   date
   echo "Juicer version:$juicer_version"
   echo "$0 $@"
 EOF
 
-jid1=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/topstats.log -j oe -N ${groupname}_Tstats -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -q batch <<-TOPSTATS
+jid1=$(qsub ${groupcharge} -o ${logdir}/topstats.log -j oe -N ${groupname}_Tstats -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -q batch <<-TOPSTATS
 export LC_ALL=C
 if ! awk -f ${juiceDir}/scripts/makemega_addstats.awk ${inter_names} > ${outputdir}/inter.txt
 then
@@ -203,7 +213,7 @@ TOPSTATS
 )
 jobIDstr=${jid1}
 # Merge all merged_nodups.txt files found under current dir
-jid2=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/merge.log -j oe -q batch -N ${groupname}_merge -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=12:thinnode <<- MRGSRT
+jid2=$(qsub ${groupcharge} -o ${logdir}/merge.log -j oe -q batch -N ${groupname}_merge -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=12:thinnode <<- MRGSRT
 if ! sort --parallel=12 -T ${tmpdir} -m -k2,2d -k6,6d ${merged_names} > ${outputdir}/merged_nodups.txt
 then
 echo "***! Some problems occurred somewhere in merging sorted merged_nodups files."
@@ -217,21 +227,21 @@ MRGSRT
 jobIDstr="${jobIDstr}:${jid2}"
 
 # Create statistics files for MQ > 0
-jid3=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/inter0.log -j oe -q batch -N ${groupname}_inter0 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid1}:${jid2} <<- INTER0
+jid3=$(qsub ${groupcharge} -o ${logdir}/inter0.log -j oe -q batch -N ${groupname}_inter0 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid1}:${jid2} <<- INTER0
 ${juiceDir}/scripts/statistics.pl -q 1 -o${outputdir}/inter.txt -s $site_file -l $ligation ${outputdir}/merged_nodups.txt
 INTER0
 )
 jobIDstr="${jobIDstr}:${jid3}"
 
 # Create statistics files for MQ > 30
-jid4=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/inter30.log -j oe -q batch -N ${groupname}_inter30 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid1}:${jid2}  <<- INTER30
+jid4=$(qsub ${groupcharge} -o ${logdir}/inter30.log -j oe -q batch -N ${groupname}_inter30 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid1}:${jid2}  <<- INTER30
 ${juiceDir}/scripts/statistics.pl -q 30 -o${outputdir}/inter_30.txt -s $site_file -l $ligation ${outputdir}/merged_nodups.txt
 INTER30
 )
 jobIDstr="${jobIDstr}:${jid4}"
 
 # Create HIC maps file for MQ > 0
-jid5=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hic0_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic0 -l mem=40gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC0
+jid5=$(qsub ${groupcharge} -o ${logdir}/hic0_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic0 -l mem=40gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC0
 $load_java
 if [ -z "$exclude" ]
 then
@@ -245,7 +255,7 @@ HIC0
 )
 jobIDstr="${jobIDstr}:${jid5}"
 # Create HIC maps file for MQ > 30
-jid6=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hic30_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic30 -l mem=60gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC30
+jid6=$(qsub ${groupcharge} -o ${logdir}/hic30_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic30 -l mem=60gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC30
 $load_java
 if [ -z "${exclude}" ]
 then
@@ -260,7 +270,7 @@ HIC30
 jobIDstr="${jobIDstr}:${jid6}"
 
 # Create loop and domain lists file for MQ > 30
-jid7=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hiccups.log -j oe -q batch -N ${groupname}hiccups -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=1:gpus=1:GPU -W depend=afterok:${jid6} <<- HICCUPS
+jid7=$(qsub ${groupcharge} -o ${logdir}/hiccups.log -j oe -q batch -N ${groupname}hiccups -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=1:gpus=1:GPU -W depend=afterok:${jid6} <<- HICCUPS
 $load_java
 $load_cuda
 echo $PBS_GPUFILE
@@ -274,7 +284,7 @@ HICCUPS
 
 jobIDstr="${jobIDstr}:${jid7}"
 
-jid8=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/arrowhead.log -j oe -q batch -N ${groupname}_ArwHead -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=1:gpus=1:GPU -W depend=afterok:${jid6} <<- ARROWHEAD
+jid8=$(qsub ${groupcharge} -o ${logdir}/arrowhead.log -j oe -q batch -N ${groupname}_ArwHead -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=1:gpus=1:GPU -W depend=afterok:${jid6} <<- ARROWHEAD
 $load_java
 $load_cuda
 echo $PBS_GPUFILE
@@ -284,9 +294,9 @@ ${juiceDir}/scripts/juicer_arrowhead.sh -j ${juiceDir}/scripts/juicer_tools -i $
 ARROWHEAD
 )
 
-qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/done.log -j oe -q batch -N ${groupname}_done -W depend=afterok:${jobIDstr} <<- FINAL
+qsub ${groupcharge} -o ${logdir}/done.log -j oe -q batch -N ${groupname}_done -W depend=afterok:${jobIDstr} <<- FINAL
 echo "All jobs finished processing!"
 FINAL
-qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/done.out -j oe -q batch -N ${groupname}_fail -W depend=afternotok:${jobIDstr} <<- FINAL
+qsub ${groupcharge} -o ${logdir}/done.out -j oe -q batch -N ${groupname}_fail -W depend=afternotok:${jobIDstr} <<- FINAL
 echo "Error occored in placing the jobs. Please check err file of each step to find out"
 FINAL

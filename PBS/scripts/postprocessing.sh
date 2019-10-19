@@ -9,7 +9,7 @@ echo "waitstring3 is: ${waitstring3}"
 timestamp=$(date +"%s" | cut -c 4-10)
 qsub <<- POSTPROCWRAP
 #PBS -S /bin/bash
-#PBS -q $queue -W group_list=cu_10027 -A cu_10027
+#PBS -q $queue $groupcharge
 #PBS -l $walltime
 #PBS -l nodes=1:ppn=1:thinnode
 #PBS -l mem=4gb
@@ -31,7 +31,7 @@ echo "waitstring4 is : \${waitstring4}"
 timestamp=\$(date +"%s" | cut -c 4-10)
 qsub <<POSTPROCESS
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l $long_walltime
     #PBS -l nodes=1:ppn=1:gpus=1:GPU
     #PBS -l mem=60gb
@@ -58,7 +58,7 @@ wait
 timestamp=$(date +"%s" | cut -c 4-10)
 qsub <<- FINCK
 #PBS -S /bin/bash
-#PBS -q $queue -W group_list=cu_10027 -A cu_10027
+#PBS -q $queue $groupcharge
 #PBS -l $walltime
 #PBS -o ${logdir}/${timestamp}_prep_done_${groupname}.log
 #PBS -j oe
@@ -80,7 +80,7 @@ fi
 timestamp=\$(date +"%s" | cut -c 4-10)
 qsub <<DONE
     #PBS -S /bin/bash
-    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
+    #PBS -q $queue $groupcharge
     #PBS -l $walltime
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb
@@ -95,4 +95,3 @@ qsub <<DONE
     ${juiceDir}/scripts/check.sh
 DONE
 FINCK
-
