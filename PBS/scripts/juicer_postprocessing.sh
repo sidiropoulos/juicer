@@ -29,7 +29,7 @@
 # Juicer version 1.5
 
 ## Read arguments
-usageHelp="Usage: ${0} [-h] -j <juicer_tools_file_path> -i <hic_file_path> -m <bed_file_dir> -g <genome ID>"
+usageHelp="Usage: ${0} [-h] -t <threads> -j <juicer_tools_file_path> -i <hic_file_path> -m <bed_file_dir> -g <genome ID>"
 
 printHelpAndExit() {
     echo "$usageHelp"
@@ -42,24 +42,25 @@ hic_file_path="$(pwd)/aligned/inter_30.hic"
 juicer_tools_path="/opt/juicer/scripts/juicer_tools"
 bed_file_dir="/opt/juicer/references/motif"
 
-while getopts "h:g:j:i:m:" opt; do
+while getopts "h:g:j:i:m:t:" opt; do
     case $opt in
 	h) printHelpAndExit 0;;
 	j) juicer_tools_path=$OPTARG ;;
 	i) hic_file_path=$OPTARG ;;
-	m) bed_file_dir=$OPTARG ;; 
+	m) bed_file_dir=$OPTARG ;;
 	g) genomeID=$OPTARG ;;
+  t) threads=$OPTARG ;;
 	[?]) printHelpAndExit 1;;
     esac
 done
 
-## Check that juicer_tools exists 
+## Check that juicer_tools exists
 if [ ! -e "${juicer_tools_path}" ]; then
     echo "***! Can't find juicer tools in ${juicer_tools_path}";
     exit 1
 fi
 
-## Check that hic file exists    
+## Check that hic file exists
 if [ ! -e "${hic_file_path}" ]; then
     echo "***! Can't find inter.hic in ${hic_file_path}";
     exit 1
@@ -67,38 +68,38 @@ fi
 
 echo -e "${juicer_tools_path} is post-processing Hi-C for ${genomeID}\nData read from ${hic_file_path}.\nMotifs read from ${bed_file_dir}\n"
 echo -e "ARROWHEAD:\n"
-${juicer_tools_path} arrowhead ${hic_file_path} ${hic_file_path%.*}"_contact_domains.txt"
+${juicer_tools_path} arrowhead --threads ${threads} -k VC ${hic_file_path} ${hic_file_path%.*}"_contact_domains"
 if [ $? -ne 0 ]; then
     echo "***! Problem while running Arrowhead";
     exit 1
 fi
 echo -e "\nHiCCUPS:\n"
-if hash nvcc 2>/dev/null 
-then 
-    ${juicer_tools_path} hiccups ${hic_file_path} ${hic_file_path%.*}"_loops.txt"
+#if hash nvcc 2>/dev/null
+#then
+    ${juicer_tools_path} hiccups --cpu --threads ${threads} -k VC ${hic_file_path} ${hic_file_path%.*}"_loops"
     if [ $? -ne 0 ]; then
-	echo "***! Problem while running HiCCUPS";
-	exit 1
+	    echo "***! Problem while running HiCCUPS";
+	    exit 1
     fi
-else 
-    echo "GPUs are not installed so HiCCUPs cannot be run";
-fi
+#else
+#    echo "GPUs are not installed so HiCCUPs cannot be run";
+#fi
 
-if [ -f ${hic_file_path%.*}"_loops.txt" ]
+if [ -d ${hic_file_path%.*}"_loops" ]
 then
     echo -e "\nAPA:\n"
-    ${juicer_tools_path} apa ${hic_file_path} ${hic_file_path%.*}"_loops.txt" "apa_results"
-    ## Check that bed folder exists    
+    ${juicer_tools_path} apa --threads ${threads} -k VC ${hic_file_path} ${hic_file_path%.*}"_loops" "apa_results"
+    ## Check that bed folder exists
     if [ ! -e "${bed_file_dir}" ]; then
-	echo "***! Can't find folder ${bed_file_dir}";
-	echo "***! Not running motif finder";
+      echo "***! Can't find folder ${bed_file_dir}";
+      echo "***! Not running motif finder";
     else
-	echo -e "\nMOTIF FINDER:\n"
-	${juicer_tools_path} motifs ${genomeID} ${bed_file_dir} ${hic_file_path%.*}"_loops.txt"
+      echo -e "\nMOTIF FINDER:\n"
+      ${juicer_tools_path} motifs --threads ${threads} ${genomeID} ${bed_file_dir} ${hic_file_path%.*}"_loops"
     fi
     echo -e "\n(-: Feature annotation successfully completed (-:"
 else
-  # if loop lists do not exist but Juicer Tools didn't return an error, likely 
+  # if loop lists do not exist but Juicer Tools didn't return an error, likely
   # too sparse
     echo -e "\n(-: Postprocessing successfully completed, maps too sparse to annotate or GPUs unavailable (-:"
 fi

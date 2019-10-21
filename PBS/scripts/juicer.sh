@@ -1079,6 +1079,7 @@ SUPERWRAP1
     export genomeID=$genomeID
     export outputdir=$outputdir
     export logdir=${logdir}
+    export threads=${threads}
     export splitdir=$splitdir
     export groupcharge=${groupcharge}
     export queue=$queue
