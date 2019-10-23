@@ -5,11 +5,12 @@ then
     waitstring3="#PBS -W depend=afterok:${jID_launch}"
 fi
 echo "waitstring3 is: ${waitstring3}"
+echo -W group_list=cu_10027 -A cu_10027
 
 timestamp=$(date +"%s" | cut -c 4-10)
 qsub <<- POSTPROCWRAP
 #PBS -S /bin/bash
-#PBS -q $queue $groupcharge
+#PBS -q $queue -W group_list=cu_10027 -A cu_10027
 #PBS -l $walltime
 #PBS -l nodes=1:ppn=1:thinnode
 #PBS -l mem=4gb
@@ -31,7 +32,7 @@ echo "waitstring4 is : \${waitstring4}"
 timestamp=\$(date +"%s" | cut -c 4-10)
 qsub <<POSTPROCESS
     #PBS -S /bin/bash
-    #PBS -q $queue $groupcharge
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $long_walltime
     #PBS -l nodes=1:ppn=${threads}:thinnode
     #PBS -l mem=60gb
@@ -58,7 +59,7 @@ wait
 timestamp=$(date +"%s" | cut -c 4-10)
 qsub <<- FINCK
 #PBS -S /bin/bash
-#PBS -q $queue $groupcharge
+#PBS -q $queue -W group_list=cu_10027 -A cu_10027
 #PBS -l $walltime
 #PBS -o ${logdir}/${timestamp}_prep_done_${groupname}.log
 #PBS -j oe
@@ -80,7 +81,7 @@ fi
 timestamp=\$(date +"%s" | cut -c 4-10)
 qsub <<DONE
     #PBS -S /bin/bash
-    #PBS -q $queue $groupcharge
+    #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $walltime
     #PBS -l nodes=1:ppn=1:thinnode
     #PBS -l mem=4gb

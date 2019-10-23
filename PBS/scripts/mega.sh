@@ -62,7 +62,7 @@ genomeID="hg19"
 resolutions="2500000,1000000,500000,250000,100000,50000,25000,10000,5000,2500,1000"
 
 # is juicer ran on computerome?
-isCROME=$(hostname | awk '{if ($1~/computerome/){print 1}else {print 0}}')
+isCROME=$(hostname | awk '{if ($1~/computerome|risoe/){print 1}else {print 0}}')
 
 if [ $isCROME -eq 1 ]
 then

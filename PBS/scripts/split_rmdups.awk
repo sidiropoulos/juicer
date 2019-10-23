@@ -38,7 +38,7 @@ BEGIN{
 			cmd=sprintf("qstat | grep osplit%s |cut -c 1-8", groupname);
 			cmd |& getline jID_osplit;
 			sname=sprintf("%s_msplit%04d_", groupname, name);
-			sysstring1=sprintf("qsub -l %s -o %s_%s.log -j oe %s -q %s -N DDuP%s%s -l mem=4gb -l nodes=1:ppn=1:thinnode -W depend=afterok:%s <<-EOF\nawk -f  %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, groupcharge, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
+			sysstring1=sprintf("qsub -l %s -o %s_%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -l mem=4gb -l nodes=1:ppn=1:thinnode -W depend=afterok:%s <<-EOF\nawk -f  %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
 			system(sysstring1);
 			cmd1=sprintf("qstat | grep DDuP%s%s | cut -d ' ' -f 1 | cut -d '.' -f 1-2",name,groupname);
 			cmd1 |& getline jID;
@@ -67,10 +67,10 @@ END {
 	print "This is the begining of END step, submitting _dedup job in END step";
 
 	if (name == 0 ){
-		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe %s -q %s -N DDuP%s%s  <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, groupcharge, queue, name, groupname, juicedir, dir, sname, dir, name, dir, name);
+		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s  <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, juicedir, dir, sname, dir, name, dir, name);
 	}
 	else {
-		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe %s -q %s -N DDuP%s%s -W depend=afterok:%s <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, groupcharge, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
+		sysstring2=sprintf("qsub -l %s -o %s_%s_dedup%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -W depend=afterok:%s <<-EOF\nawk -f %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, name, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
 	}
 	system(sysstring2);
 
@@ -94,7 +94,7 @@ END {
 	print "below is the waited job status before qsub"
 	print waitedjobstatus;
 	print "submitting _catsplit jobs";
-	sysstring = sprintf("qsub -l %s -o %s_catsplit.log -j oe %s -q %s -N CtSplt%s -W depend=afterok:%s <<-EOF\ncat %s/%s_msplit*_optdups.txt > %s/opt_dups.txt;  cat %s/%s_msplit*_dups.txt > %s/dups.txt; cat %s/%s_msplit*_merged_nodups.txt > %s/merged_nodups.txt; \nEOF\n", walltime, outfile, groupcharge, queue, groupname, waitstring, dir, groupname, dir, dir, groupname, dir, dir, groupname, dir, dir);
+	sysstring = sprintf("qsub -l %s -o %s_catsplit.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N CtSplt%s -W depend=afterok:%s <<-EOF\ncat %s/%s_msplit*_optdups.txt > %s/opt_dups.txt;  cat %s/%s_msplit*_dups.txt > %s/dups.txt; cat %s/%s_msplit*_merged_nodups.txt > %s/merged_nodups.txt; \nEOF\n", walltime, outfile, queue, groupname, waitstring, dir, groupname, dir, dir, groupname, dir, dir, groupname, dir, dir);
 	system(sysstring);
 	cmd4=sprintf("qstat | grep CtSplt%s | cut -d ' ' -f 1 | cut -d '.' -f 1-2",groupname);
 	cmd4 |& getline jID_catsplit;
@@ -102,7 +102,7 @@ END {
 	print "below is the _catsplit id";
 	print jID_catsplit;
 	print "submitting _rmsplit jobs";
-	sysstring=sprintf("qsub -l %s -o %s_rmsplit.log -j oe %s -q %s -N RmSplt%s -W depend=afterok:%s <<-EOF\n rm %s/*_msplit*_optdups.txt; rm %s/*_msplit*_dups.txt; rm %s/*_msplit*_merged_nodups.txt; rm %s/split*;\nEOF", walltime, outfile, groupcharge, queue, groupname,jID_catsplit, dir, dir, dir, dir);
+	sysstring=sprintf("qsub -l %s -o %s_rmsplit.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N RmSplt%s -W depend=afterok:%s <<-EOF\n rm %s/*_msplit*_optdups.txt; rm %s/*_msplit*_dups.txt; rm %s/*_msplit*_merged_nodups.txt; rm %s/split*;\nEOF", walltime, outfile, queue, groupname,jID_catsplit, dir, dir, dir, dir);
 	system(sysstring);
 	cmd=sprintf("qstat | grep RmSplt%s | cut -d ' ' -f 1 | cut -d '.' -f 1-2",groupname);
 	cmd |& getline jID_rmsplit;

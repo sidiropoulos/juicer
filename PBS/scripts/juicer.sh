@@ -130,7 +130,7 @@ about=""
 nofrag=1
 
 # is juicer ran on computerome?
-isCROME=$(hostname | awk '{if ($1~/computerome/){print 1}else {print 0}}')
+isCROME=$(hostname | awk '{if ($1~/computerome|risoe/){print 1}else {print 0}}')
 
 if [ $isCROME -eq 1 ]
 then
@@ -985,7 +985,7 @@ then
         date +"%Y-%m-%d %H:%M:%S"
         echo "Sucess: All mergefragments jobs were successfully finished!"
         echo "now starts to remove duplicates from the big sorted file"
-        awk -v queue=${long_queue} -v outfile=${logdir}/\${timestamp}_awksplit_rmdunps -v juicedir=${juiceDir} -v dir=$outputdir -v groupname=$groupname -v groupcharge=${groupcharge} -v walltime=$long_walltime -f ${juiceDir}/scripts/split_rmdups.awk $outputdir/merged_sort.txt
+        awk -v queue=${long_queue} -v outfile=${logdir}/\${timestamp}_awksplit_rmdunps -v juicedir=${juiceDir} -v dir=$outputdir -v groupname=$groupname -v groupcharge="${groupcharge}" -v walltime=$long_walltime -f ${juiceDir}/scripts/split_rmdups.awk $outputdir/merged_sort.txt
 RMDUPLICATE
 
 RMDUPWRAP
@@ -1081,7 +1081,7 @@ SUPERWRAP1
     export logdir=${logdir}
     export threads=${threads}
     export splitdir=$splitdir
-    export groupcharge=${groupcharge}
+    export groupcharge="${groupcharge}"
     export queue=$queue
     export walltime=$walltime
     export long_walltime=$long_walltime
