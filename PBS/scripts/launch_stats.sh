@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "check the variables:"
 echo "${juiceDir}/scripts/launch_stats.sh"
-echo "genomename: $groupname"
+echo "genomename: $genome"
 echo "juiceDir: $juiceDir"
 echo "about: $about"
 echo "site_file: $site_file"
@@ -78,10 +78,10 @@ qsub <<STATS0
         module load juicerstats/0.0.1
 
 	tail -n1 $headfile | awk '{printf"%-1000s\n", \\\$0}' > $outputdir/inter.txt
-	${juiceDir}/scripts/statistics.pl -s $site_file -l $ligation -o $outputdir/stats_dups.txt $outputdir/dups.txt
+	${juiceDir}/scripts/statistics.pl -s $site_file -l "$ligation" -o $outputdir/stats_dups.txt $outputdir/dups.txt
 	cat $splitdir/*.res.txt | awk -f ${juiceDir}/scripts/stats_sub.awk >> $outputdir/inter.txt
 	java -cp ${juiceDir}/scripts/ LibraryComplexity $outputdir inter.txt >> $outputdir/inter.txt
-	${juiceDir}/scripts/statistics.pl -s $site_file -l $ligation -o $outputdir/inter.txt -q 1 $outputdir/merged_nodups.txt
+	${juiceDir}/scripts/statistics.pl -s $site_file -l "$ligation" -o $outputdir/inter.txt -q 1 $outputdir/merged_nodups.txt
 
 	juicerstats -i $outputdir/inter.txt -o $outputdir/inter.pdf
 
@@ -114,7 +114,7 @@ qsub <<STATS30
 	tail -n1 $headfile | awk '{printf"%-1000s\n", \\\$0}' > $outputdir/inter_30.txt
 	cat $splitdir/*.res.txt | awk -f ${juiceDir}/scripts/stats_sub.awk >> $outputdir/inter_30.txt
 	java -cp ${juiceDir}/scripts/ LibraryComplexity $outputdir inter_30.txt >> $outputdir/inter_30.txt
-	${juiceDir}/scripts/statistics.pl -s $site_file -l $ligation -o $outputdir/inter_30.txt -q 30 $outputdir/merged_nodups.txt
+	${juiceDir}/scripts/statistics.pl -s $site_file -l "$ligation" -o $outputdir/inter_30.txt -q 30 $outputdir/merged_nodups.txt
 
 	juicerstats -i $outputdir/inter_30.txt -o $outputdir/inter_30.pdf
 
@@ -186,7 +186,7 @@ qsub <<- HIC30WORK
 	echo -e 'Experiment description: $about' > $outputdir/inter_30.txt
 	cat $splitdir/*.res.txt | awk -f ${juiceDir}/scripts/stats_sub.awk >> $outputdir/inter_30.txt
 	java -cp ${juiceDir}/scripts/ LibraryComplexity $outputdir inter_30.txt >> $outputdir/inter_30.txt
-	${juiceDir}/scripts/statistics.pl -s $site_file -l $ligation -o $outputdir/inter_30.txt -q 30 $outputdir/merged_nodups.txt
+	${juiceDir}/scripts/statistics.pl -s $site_file -l "$ligation" -o $outputdir/inter_30.txt -q 30 $outputdir/merged_nodups.txt
 	if [  \"$nofrag\" -eq 1 ]
 	then 
 	${juiceDir}/scripts/juicer_tools pre -s $outputdir/inter_30.txt -g $outputdir/inter_30_hists.m -q 30 $outputdir/merged_nodups.txt $outputdir/inter_30.hic $genomePath

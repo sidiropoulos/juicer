@@ -254,9 +254,9 @@ case $site in
     Csp6I) ligation="GTATAC";;
     NcoI) ligation="CCATGCATGG";;
     MseI) ligation="TTATAA";;
-    Csp6I_MseI) ligation="TTATAA";;
-    Csp6I_MboI) ligation="GATCGATC";;
-    MboI_MseI) ligation="TTATAA";;
+    Csp6I+MseI) ligation="GTATAC|TTATAA";;
+    Csp6I+MboI) ligation="GTATAC|GATCGATC";;
+    MboI+MseI) ligation="GATCGATC|TTATAA";;
     none) ligation="XXXX";;
     *)  ligation="XXXX"
     echo "$site not listed as recognized enzyme. Using $site_file as site file"
@@ -508,12 +508,6 @@ SPLITMV
         #PBS -o ${logdir}/\${timestamp}_\${jname}_CntLig_\${countjobs}_${groupname}.log
         #PBS -j oe
         #PBS -N CtLig\${countjobs}${groupname}
-        #PBS -v name=\${name}
-        #PBS -v name1=\${name1}
-        #PBS -v name2=\${name2}
-        #PBS -v ext=\${ext}
-        #PBS -v ligation=${ligation}
-        #PBS -v usezip=\${usezip}
 
         date +"%Y-%m-%d %H:%M:%S"
         export usegzip=\${usegzip}
@@ -521,7 +515,7 @@ SPLITMV
         export name1=\${name1}
         export name2=\${name2}
         export ext=\${ext}
-        export ligation=${ligation}
+        export ligation="${ligation}"
         ${juiceDir}/scripts/countligations.sh
 CNTLIG
         jID_cntlig=\$(qstat | grep "CtLig\${countjobs}${groupname}" | cut -d ' ' -f 1 | cut -d "." -f 1-2 )
@@ -1026,7 +1020,7 @@ then
         export load_java="${load_java}"
         export about=$about
         export site_file=$site_file
-        export ligation=$ligation
+        export ligation="$ligation"
         export logdir=${logdir}
         export outputdir=$outputdir
         export splitdir=$splitdir
