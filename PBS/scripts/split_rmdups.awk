@@ -32,13 +32,13 @@ BEGIN{
 	name=0;
 }
 {
-	if (tot >= 1000000) {
+	if (tot >= 10000000) {
 		if (p1 != $1 || p2 != $2 || p4 != $4 || p5 != $5 || p8 != $8) {
 			print "this is the beginging part of split rmdups awk";
 			cmd=sprintf("qstat | grep osplit%s |cut -c 1-8", groupname);
 			cmd |& getline jID_osplit;
 			sname=sprintf("%s_msplit%04d_", groupname, name);
-			sysstring1=sprintf("qsub -l %s -o %s_%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -l mem=4gb -l nodes=1:ppn=1:thinnode -W depend=afterok:%s <<-EOF\nawk -f  %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
+			sysstring1=sprintf("qsub -l %s -o %s_%s.log -j oe -W group_list=cu_10027 -A cu_10027 -q %s -N DDuP%s%s -l mem=8gb -l nodes=1:ppn=1:thinnode -l walltime=08:00:00 -W depend=afterok:%s <<-EOF\nawk -f  %s/scripts/dups.awk -v name=%s/%s %s/split%04d;\nEOF\n", walltime, outfile, sname, queue, name, groupname, jID_osplit ,juicedir, dir, sname, dir, name, dir, name);
 			system(sysstring1);
 			cmd1=sprintf("qstat | grep DDuP%s%s | cut -d ' ' -f 1 | cut -d '.' -f 1-2",name,groupname);
 			cmd1 |& getline jID;
