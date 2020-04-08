@@ -44,6 +44,7 @@ juiceDir="/home/projects/cu_10027/apps/software/juicer"
 # default queue and time
 #queue="batch"
 #walltime="walltime=12:00:00"
+threads=8
 
 # unique name for jobs in this run
 groupname="C$(date +"%s"|cut -c 6-11)"
@@ -66,7 +67,8 @@ usageHelp="Usage: ${0##*/} -g genomeID [-d topDir] [-s site] [-r resolutions] [-
 genomeHelp="   [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \"$genomeID\")"
 dirHelp="   [topDir] is the top level directory (default \"$topDir\") and must contain links to all merged_nodups files underneath it"
 siteHelp="   [site] must be defined in the script, e.g.  \"HindIII\" or \"MboI\" (default \"$site\"); alternatively, this can be the restriction site file"
-resolutionsHelp="   [resolutions] is a comma-delimited list of resolutions, such as 10000,5000,1000,5f (default is 2.5M,1M,500K,250K,100K,50K,25K,10K,5K in base pair and 500f,250f,100f,50f,25f,10f,5f,2f,1f)"
+resolutionsHelp="   [resolutions] is a comma-delimited list of resolutions, such as 10000,5000,1000,5f (default is \"$resolutions\")"
+threadsHelp="   [threads] number of threads to run hiccups and arrowhead on (default $threads)"
 excludeHelp="   -f: include fragment-delimited maps in Hi-C mega map"
 helpHelp="   -h: print this help and exit"
 
@@ -76,12 +78,13 @@ printHelpAndExit() {
     echo "$dirHelp"
     echo "$siteHelp"
     echo "$resolutionsHelp"
+    echo "$threadsHelp"
     echo "$excludeHelp"
     echo "$helpHelp"
     exit "$1"
 }
 
-while getopts "d:g:r:h:x:s" opt; do
+while getopts "d:g:r:h:x:t:s" opt; do
     case $opt in
 	g) genomeID=$OPTARG ;;
 	h) printHelpAndExit 0;;
@@ -89,6 +92,7 @@ while getopts "d:g:r:h:x:s" opt; do
 	s) site=$OPTARG ;;
 	f) exclude=0 ;;
 	r) resolutions=$OPTARG ;;
+	t) threads=$OPTARG ;;
 	[?]) printHelpAndExit 1;;
     esac
 done
@@ -119,7 +123,7 @@ then
 fi
 
 ## Directories to be created and regex strings for listing files
-megadir=${topDir}"/mega"
+megadir=${topDir}
 outputdir=${megadir}"/aligned"
 tmpdir=${megadir}"/HIC_tmp"
 # set global tmpdir so no problems with /var/tmp
@@ -260,13 +264,12 @@ HIC30
 jobIDstr="${jobIDstr}:${jid6}"
 
 # Create loop and domain lists file for MQ > 30
-jid7=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hiccups.log -j oe -q batch -N ${groupname}hiccups -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=1:gpus=1:GPU -W depend=afterok:${jid6} <<- HICCUPS
+jid7=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hiccups.log -j oe -q batch -N ${groupname}hiccups -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=${threads} -W depend=afterok:${jid6} <<- HICCUPS
 $load_java
 $load_cuda
-echo $PBS_GPUFILE
 export _JAVA_OPTIONS=-Xmx16384m;
 export LC_ALL=C
-${juiceDir}/scripts/juicer_hiccups.sh -j ${juiceDir}/scripts/juicer_tools -i ${outputdir}/inter_30.hic -m ${juiceDir}/references/motif -g ${genomeID}
+${juiceDir}/scripts/juicer_hiccups.sh -j ${juiceDir}/scripts/juicer_tools -i ${outputdir}/inter_30.hic -m ${juiceDir}/references/motif -g ${genomeID} -t ${threads}
 B
 HICCUPS
 
@@ -274,13 +277,12 @@ HICCUPS
 
 jobIDstr="${jobIDstr}:${jid7}"
 
-jid8=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/arrowhead.log -j oe -q batch -N ${groupname}_ArwHead -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=1:gpus=1:GPU -W depend=afterok:${jid6} <<- ARROWHEAD
+jid8=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/arrowhead.log -j oe -q batch -N ${groupname}_ArwHead -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=${threads} -W depend=afterok:${jid6} <<- ARROWHEAD
 $load_java
 $load_cuda
-echo $PBS_GPUFILE
 export _JAVA_OPTIONS=-Xmx16384m;
 export LC_ALL=C
-${juiceDir}/scripts/juicer_arrowhead.sh -j ${juiceDir}/scripts/juicer_tools -i ${outputdir}/inter_30.hic
+${juiceDir}/scripts/juicer_arrowhead.sh -j ${juiceDir}/scripts/juicer_tools -t ${threads} -i ${outputdir}/inter_30.hic
 ARROWHEAD
 )
 

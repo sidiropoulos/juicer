@@ -27,7 +27,7 @@
 # Juicer 1.5
 
 ## Read arguments
-usageHelp="Usage: ${0} [-h] -j <juicer_tools_file_path> -i <hic_file_path>"
+usageHelp="Usage: ${0} [-h] -j <juicer_tools_file_path> -i <hic_file_path> -t <threads>"
 
 printHelpAndExit() {
     echo "$usageHelp"
@@ -38,12 +38,14 @@ printHelpAndExit() {
 genomeID="hg19"
 hic_file_path="$(pwd)/aligned/inter_30.hic"
 juicer_tools_path="/opt/juicer/scripts/juicer_tools"
+threads=1
 
-while getopts "h:j:i:" opt; do
+while getopts "h:j:i:t:" opt; do
     case $opt in
 	h) printHelpAndExit 0;;
 	j) juicer_tools_path=$OPTARG ;;
 	i) hic_file_path=$OPTARG ;;
+	t) threads=$OPTARG ;;
 	[?]) printHelpAndExit 1;;
     esac
 done
@@ -62,7 +64,7 @@ fi
 
 echo -e "${juicer_tools_path} is post-processing Hi-C for ${genomeID}\nData read from ${hic_file_path}.\nMotifs read from ${bed_file_dir}\n"
 echo -e "ARROWHEAD:\n"
-${juicer_tools_path} arrowhead ${hic_file_path} ${hic_file_path%.*}"_contact_domains.txt"
+${juicer_tools_path} arrowhead --threads ${threads} ${hic_file_path} ${hic_file_path%.*}"_contact_domains.txt"
 if [ $? -ne 0 ]; then
     echo "***! Problem while running Arrowhead";
     exit 100
