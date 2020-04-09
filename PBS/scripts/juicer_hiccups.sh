@@ -35,7 +35,7 @@ printHelpAndExit() {
 }
 
 #set defaults
-genomeID="hg19"
+genomeID="hg38"
 hic_file_path="$(pwd)/aligned/inter_30.hic"
 juicer_tools_path="/home/projects/cu_10027/apps/software/juicer/PBS/scripts/juicer_tools"
 bed_file_dir="/home/projects/cu_10027/apps/software/juicer/references/motif"

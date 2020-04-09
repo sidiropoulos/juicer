@@ -35,7 +35,7 @@ printHelpAndExit() {
 }
 
 #set defaults
-genomeID="hg19"
+genomeID="hg38"
 hic_file_path="$(pwd)/aligned/inter_30.hic"
 juicer_tools_path="/home/projects/cu_10027/apps/software/juicer/PBS/scripts/juicer_tools"
 threads=1
@@ -50,13 +50,13 @@ while getopts "hj:i:t:" opt; do
     esac
 done
 
-## Check that juicer tools exists 
+## Check that juicer tools exists
 if [ ! -e "${juicer_tools_path}" ]; then
   echo "***! Can't find juicer tools in ${juicer_tools_path}";
   exit 100;
 fi
 
-## Check that hic file exists    
+## Check that hic file exists
 if [ ! -e "${hic_file_path}" ]; then
   echo "***! Can't find inter.hic in ${hic_file_path}";
   exit 100;

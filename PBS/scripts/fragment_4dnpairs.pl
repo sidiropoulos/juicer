@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 ##########
 #The MIT License (MIT)
 #
@@ -25,17 +25,17 @@
 
 # Perl script to convert to fragment map from infile. The infile should be in
 # DCIC format:
-# # HEADER 
+# # HEADER
 # readname chr1 pos1 chr2 pos2 str1 str2
 #
-# The script also requires a restriction site file, which lists on 
+# The script also requires a restriction site file, which lists on
 # each line, the sorted locations of the enzyme restriction sites.
 #
 # Usage:  fragment_4dnpairs.pl <infile> <outfile> [site file]\n";
 
 use POSIX;
 
-$site_file = "/opt/juicer/restriction_sites/hg19_DpnII.txt";
+$site_file = "/home/projects/cu_10027/apps/software/juicer/restriction_sites/hg38_MboI.txt";
 # Check arguments
 if (scalar(@ARGV) == 2) {
   ($infile,$outfile) = @ARGV;
@@ -46,8 +46,8 @@ elsif (scalar(@ARGV) == 3) {
 else {
   print "Usage: fragment_4dnpairs.pl <infile> <outfile> [site file]\n";
   print " <infile>: file in intermediate format to calculate statistics on\n";
-  print " <outfile>: output, results of fragment search\n";  
-  print " [site file]: list of restriction sites, one line per chromosome (default DpnII hg19)\n";
+  print " <outfile>: output, results of fragment search\n";
+  print " [site file]: list of restriction sites, one line per chromosome (default MboI hg38)\n";
   exit;
 }
 # Global variables for calculating statistics

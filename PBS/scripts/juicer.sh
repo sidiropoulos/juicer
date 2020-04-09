@@ -122,7 +122,7 @@ topDir=$(pwd)
 # restriction enzyme, can also be set in options
 site="MboI"
 # genome ID, default to human, can also be set in options
-genomeID="hg19"
+genomeID="hg38"
 # normally both read ends are aligned with long read aligner;
 # if one end is short, this is set
 shortreadend=0
