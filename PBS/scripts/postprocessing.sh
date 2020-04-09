@@ -33,7 +33,7 @@ qsub <<POSTPROCESS
     #PBS -S /bin/bash
     #PBS -q $queue -W group_list=cu_10027 -A cu_10027
     #PBS -l $long_walltime
-    #PBS -l nodes=1:ppn=1:gpus=1:GPU
+    #PBS -l nodes=1:ppn=$threads
     #PBS -l mem=60gb
     #PBS -o ${logdir}/\${timestamp}_postproc_${groupname}.log
     #PBS -j oe
@@ -47,7 +47,7 @@ qsub <<POSTPROCESS
     export _JAVA_OPTIONS=-Xmx16384m
     export LC_ALL=en_US.UTF-8
 
-    ${juiceDir}/scripts/juicer_postprocessing.sh -j ${juiceDir}/scripts/juicer_tools -i ${outputdir}/inter_30.hic -m ${juiceDir}/references/motif -g $genomeID
+    ${juiceDir}/scripts/juicer_postprocessing.sh -j ${juiceDir}/scripts/juicer_tools -i ${outputdir}/inter_30.hic -m ${juiceDir}/references/motif -g $genomeID -t $threads
 
 POSTPROCESS
 POSTPROCWRAP

@@ -129,9 +129,10 @@ shortreadend=0
 # description, default empty
 about=""
 nofrag=1
+highres=0
 
 ## Read arguments
-usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-r] [-h] [-f]"
+usageHelp="Usage: ${0##*/} [-g genomeID] [-d topDir] [-q queue] [-l long queue] [-s site]\n                 [-a about] [-R end] [-S stage] [-p chrom.sizes path]\n                 [-y restriction site file] [-z reference genome file]\n                 [-C chunk size] [-D Juicer scripts directory]\n                 [-Q queue time limit] [-L long queue time limit] [-r] [-h] [-f] [-k]"
 genomeHelp="* [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \n  \"$genomeID\"); alternatively, it can be defined using the -z command"
 dirHelp="* [topDir] is the top level directory (default\n  \"$topDir\")\n     [topDir]/fastq must contain the fastq files\n     [topDir]/splits will be created to contain the temporary split files\n     [topDir]/aligned will be created for the final alignment"
 queueHelp="* [queue] is the queue for running alignments (default \"$queue\")"
@@ -149,6 +150,7 @@ refSeqHelp="* [reference genome file]: enter path for reference sequence file, B
 queueTimeHelp="* [queue time limit]: time limit for queue, i.e. -l 12:00 is 12 hours\n  (default ${walltime})"
 longQueueTimeHelp="* [long queue time limit]: time limit for long queue, i.e. -l 168:00 is one week\n  (default ${long_walltime})"
 excludeHelp="* -f: include fragment-delimited maps in hic file creation"
+highresHelp="* -k: produce high-resolution maps (2.5kb, 1kb)"
 helpHelp="* -h: print this help and exit"
 
 printHelpAndExit() {
@@ -170,11 +172,12 @@ printHelpAndExit() {
     echo -e "$queueTimeHelp"
     echo -e "$longQueueTimeHelp"
     echo "$excludeHelp"
+    echo "$highresHelp"
     echo "$helpHelp"
     exit "$1"
 }
 
-while getopts "d:g:R:k:a:hrq:s:p:l:y:z:S:C:D:Q:L:x" opt; do
+while getopts "g:d:l:q:s:R:ra:p:y:z:S:C:D:Q:L:fkh" opt; do
     case $opt in
     g) genomeID=$OPTARG ;;
     h) printHelpAndExit 0;;
@@ -194,6 +197,7 @@ while getopts "d:g:R:k:a:hrq:s:p:l:y:z:S:C:D:Q:L:x" opt; do
     Q) walltime=$OPTARG ;;
     L) long_walltime=$OPTARG ;;
     f) nofrag=0 ;;
+    k) highres=1 ;;
     [?]) printHelpAndExit 1;;
     esac
 done
@@ -268,6 +272,14 @@ esac
 if [ "$site" == "none" ]
 then
     nofrag=1;
+fi
+
+## Set Hi-C map resolutions
+if [ $highres == 0 ]
+then
+    resolutions=2500000,1000000,500000,250000,100000,50000,25000,10000,5000;
+else
+    resolutions=2500000,1000000,500000,250000,100000,50000,25000,10000,5000,2500,1000;
 fi
 
 ## If short read end is set, make sure it is 1 or 2
@@ -1031,6 +1043,7 @@ then
         export walltime=$walltime
         export long_walltime=$long_walltime
         export nofrag=$nofrag
+	export resolutions=$resolutions
         ${juiceDir}/scripts/launch_stats.sh
 SUPERWRAP1
     fi
@@ -1069,6 +1082,7 @@ SUPERWRAP1
     export walltime=$walltime
     export long_walltime=$long_walltime
     export postproc=$postproc
+    export threads=$threads
     jID_launch=\$(qstat | grep Lnch_${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2)
     echo \$jID_launch
     echo "waitstring3 is \${waitstring3}"

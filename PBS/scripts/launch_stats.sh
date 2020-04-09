@@ -70,9 +70,8 @@ qsub <<STATS0
 	export _JAVA_OPTIONS=-Xmx16384m;
 	export LC_ALL=en_US.UTF-8
 	module rm R
-	module load intel/redist/2019_update2
-        module load intel/perflibs/64
-        module load R/3.5.0
+        module load intel/perflibs
+        module load R/3.6.1
 
         module use /home/projects/cu_10027/apps/modulefiles
         module load juicerstats/0.0.1
@@ -104,9 +103,8 @@ qsub <<STATS30
 	export LC_ALL=en_US.UTF-8
 
         module rm R
-        module load intel/redist/2019_update2
         module load intel/perflibs/64
-	module load R/3.5.0
+	module load R/3.6.1
         module use /home/projects/cu_10027/apps/modulefiles
         module load juicerstats/0.0.1
 
@@ -131,7 +129,7 @@ qsub <<- ABNORMAL
 	#PBS -j oe
 	#PBS -N abnorm_${groupname}
 	\$waitstring22
-	
+
 	cat $splitdir/*_abnorm.sam > $outputdir/abnormal.sam
 	cat $splitdir/*_unmapped.sam > $outputdir/unmapped.sam
 	awk -f ${juiceDir}/scripts/collisions.awk $outputdir/abnormal.sam > $outputdir/collisions.txt
@@ -153,16 +151,16 @@ qsub <<- HICWORK
 	#PBS -j oe
 	#PBS -N hic0_${groupname}
 	#PBS -W depend=afterok:\${jID_stats0}
-	
+
 	date +"%Y-%m-%d %H:%M:%S"
-	echo "finished stats job,now launching the hic job."    
+	echo "finished stats job,now launching the hic job."
 	${load_java}
 	export _JAVA_OPTIONS=-Xmx16384m
-	if [ \"$nofrag\" -eq 1 ]
-	then 
-		${juiceDir}/scripts/juicer_tools pre -s $outputdir/inter.txt -g $outputdir/inter_hists.m -q 1 $outputdir/merged_nodups.txt $outputdir/inter.hic $genomePath
-	else 
-		${juiceDir}/scripts/juicer_tools pre -f $site_file -s $outputdir/inter.txt -g $outputdir/inter_hists.m -q 1 $outputdir/merged_nodups.txt $outputdir/inter.hic $genomePath
+	if [ $nofrag -eq 1 ]
+	then
+		${juiceDir}/scripts/juicer_tools pre -r $resolutions -s $outputdir/inter.txt -g $outputdir/inter_hists.m -q 1 $outputdir/merged_nodups.txt $outputdir/inter.hic $genomePath
+	else
+		${juiceDir}/scripts/juicer_tools pre -f $site_file -r $resolutions -s $outputdir/inter.txt -g $outputdir/inter_hists.m -q 1 $outputdir/merged_nodups.txt $outputdir/inter.hic $genomePath
 	fi
 HICWORK
 jID_stats30=\$( qstat | grep stats30${groupname} | cut -d ' ' -f 1 | cut -d "." -f 1-2)
@@ -178,7 +176,7 @@ qsub <<- HIC30WORK
 	#PBS -j oe
 	#PBS -N hic30_${groupname}
 	#PBS -W depend=afterok:\${jID_stats30}
-	
+
 	date +"%Y-%m-%d %H:%M:%S"
 	$load_java
 	export _JAVA_OPTIONS=-Xmx16384m
@@ -187,11 +185,11 @@ qsub <<- HIC30WORK
 	cat $splitdir/*.res.txt | awk -f ${juiceDir}/scripts/stats_sub.awk >> $outputdir/inter_30.txt
 	java -cp ${juiceDir}/scripts/ LibraryComplexity $outputdir inter_30.txt >> $outputdir/inter_30.txt
 	${juiceDir}/scripts/statistics.pl -s $site_file -l "$ligation" -o $outputdir/inter_30.txt -q 30 $outputdir/merged_nodups.txt
-	if [  \"$nofrag\" -eq 1 ]
-	then 
-	${juiceDir}/scripts/juicer_tools pre -s $outputdir/inter_30.txt -g $outputdir/inter_30_hists.m -q 30 $outputdir/merged_nodups.txt $outputdir/inter_30.hic $genomePath
-	else 
-		${juiceDir}/scripts/juicer_tools pre -f $site_file -s $outputdir/inter_30.txt -g $outputdir/inter_30_hists.m -q 30 $outputdir/merged_nodups.txt $outputdir/inter_30.hic $genomePath
+	if [  $nofrag -eq 1 ]
+	then
+		${juiceDir}/scripts/juicer_tools pre -r $resolutions -s $outputdir/inter_30.txt -g $outputdir/inter_30_hists.m -q 30 $outputdir/merged_nodups.txt $outputdir/inter_30.hic $genomePath
+	else
+		${juiceDir}/scripts/juicer_tools pre -f $site_file -r $resolutions -s $outputdir/inter_30.txt -g $outputdir/inter_30_hists.m -q 30 $outputdir/merged_nodups.txt $outputdir/inter_30.hic $genomePath
 	fi
 HIC30WORK
 

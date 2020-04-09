@@ -37,10 +37,10 @@ printHelpAndExit() {
 #set defaults
 genomeID="hg19"
 hic_file_path="$(pwd)/aligned/inter_30.hic"
-juicer_tools_path="/opt/juicer/scripts/juicer_tools"
+juicer_tools_path="/home/projects/cu_10027/apps/software/juicer/PBS/scripts/juicer_tools"
 threads=1
 
-while getopts "h:j:i:t:" opt; do
+while getopts "hj:i:t:" opt; do
     case $opt in
 	h) printHelpAndExit 0;;
 	j) juicer_tools_path=$OPTARG ;;

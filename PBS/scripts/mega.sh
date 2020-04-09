@@ -63,7 +63,7 @@ genomeID="hg19"
 resolutions="2500000,1000000,500000,250000,100000,50000,25000,10000,5000,2500,1000"
 
 ## Read arguments
-usageHelp="Usage: ${0##*/} -g genomeID [-d topDir] [-s site] [-r resolutions] [-hf]"
+usageHelp="Usage: ${0##*/} -g genomeID [-d topDir] [-s site] [-r resolutions] [-t threads] [-hf]"
 genomeHelp="   [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \"$genomeID\")"
 dirHelp="   [topDir] is the top level directory (default \"$topDir\") and must contain links to all merged_nodups files underneath it"
 siteHelp="   [site] must be defined in the script, e.g.  \"HindIII\" or \"MboI\" (default \"$site\"); alternatively, this can be the restriction site file"
@@ -84,7 +84,7 @@ printHelpAndExit() {
     exit "$1"
 }
 
-while getopts "d:g:r:h:x:t:s" opt; do
+while getopts "d:g:r:hx:t:s" opt; do
     case $opt in
 	g) genomeID=$OPTARG ;;
 	h) printHelpAndExit 0;;
@@ -96,7 +96,7 @@ while getopts "d:g:r:h:x:t:s" opt; do
 	[?]) printHelpAndExit 1;;
     esac
 done
-echo $site
+
 ## Set ligation junction based on restriction enzyme
 case $site in
     HindIII) ligation="AAGCTAGCTT";;
@@ -108,12 +108,12 @@ case $site in
       echo "$site not listed as recognized enzyme, so trying it as site file."
       echo "Ligation junction is undefined";;
 esac
-echo $ligation
+
 if [ -z "$site_file" ]
 then
     site_file="${juiceDir}/restriction_sites/${genomeID}_${site}.txt"
 fi
-echo $site_file
+
 ## Check that site file exists, needed for fragment number for merged_nodups
 if [ ! -e "$site_file" ] && [ "$site" != "none" ]
 then
