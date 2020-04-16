@@ -59,38 +59,41 @@ topDir=$(pwd)
 # restriction enzyme, can also be set in options
 site="MboI"
 # genome ID, default to human, can also be set in options
-genomeID="hg19"
+genomeID="hg38"
 resolutions="2500000,1000000,500000,250000,100000,50000,25000,10000,5000,2500,1000"
 
 ## Read arguments
 usageHelp="Usage: ${0##*/} -g genomeID [-d topDir] [-s site] [-r resolutions] [-t threads] [-hf]"
-genomeHelp="   [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \"$genomeID\")"
-dirHelp="   [topDir] is the top level directory (default \"$topDir\") and must contain links to all merged_nodups files underneath it"
-siteHelp="   [site] must be defined in the script, e.g.  \"HindIII\" or \"MboI\" (default \"$site\"); alternatively, this can be the restriction site file"
-resolutionsHelp="   [resolutions] is a comma-delimited list of resolutions, such as 10000,5000,1000,5f (default is \"$resolutions\")"
-threadsHelp="   [threads] number of threads to run hiccups and arrowhead on (default $threads)"
-excludeHelp="   -f: include fragment-delimited maps in Hi-C mega map"
-helpHelp="   -h: print this help and exit"
+genomeHelp="* [genomeID] must be defined in the script, e.g. \"hg19\" or \"mm10\" (default \"$genomeID\")"
+dirHelp="* [topDir] is the top level directory (default \"$topDir\") and must contain links to all merged_nodups files underneath it"
+siteHelp="* [site] must be defined in the script, e.g.  \"HindIII\" or \"MboI\" (default \"$site\"); alternatively, this can be the restriction site file"
+stageHelp="* [stage]: must be one of \"final\", \"postproc\", or \"early\".\n    -Use \"final\" when the reads have been combined into merged_nodups but the\n     final stats and hic files have not yet been created.\n    -Use \"postproc\" when the hic files have been created and only\n     postprocessing feature annotation remains to be completed.\n    -Use \"early\" for an early exit, before the final creation of the stats and\n     hic files"
+resolutionsHelp="* [resolutions] is a comma-delimited list of resolutions, such as 10000,5000,1000,5f (default is \"$resolutions\")"
+threadsHelp="* [threads] number of threads to run hiccups and arrowhead on (default $threads)"
+fragmentHelp="* -f: include fragment-delimited maps in hic file creation"
+helpHelp="* -h: print this help and exit"
 
 printHelpAndExit() {
     echo "$usageHelp"
     echo "$genomeHelp"
     echo "$dirHelp"
     echo "$siteHelp"
+    echo "$stageHelp"
     echo "$resolutionsHelp"
     echo "$threadsHelp"
-    echo "$excludeHelp"
+    echo "$fragmentHelp"
     echo "$helpHelp"
     exit "$1"
 }
 
-while getopts "d:g:r:hx:t:s" opt; do
+while getopts "g:hd:s:S:fr:t:" opt; do
     case $opt in
 	g) genomeID=$OPTARG ;;
 	h) printHelpAndExit 0;;
 	d) topDir=$OPTARG ;;
 	s) site=$OPTARG ;;
-	f) exclude=0 ;;
+  S) stage=$OPTARG ;;
+	f) fragment=1 ;;
 	r) resolutions=$OPTARG ;;
 	t) threads=$OPTARG ;;
 	[?]) printHelpAndExit 1;;
@@ -104,9 +107,9 @@ case $site in
     MboI) ligation="GATCGATC";;
     none) ligation="XXXX";;
     *)  ligation="XXXX"
-      site_file=$site
-      echo "$site not listed as recognized enzyme, so trying it as site file."
-      echo "Ligation junction is undefined";;
+    site_file=$site
+    echo "$site not listed as recognized enzyme, so trying it as site file."
+    echo "Ligation junction is undefined";;
 esac
 
 if [ -z "$site_file" ]
@@ -120,6 +123,18 @@ then
     echo "***! $site_file does not exist. It must be created before running this script."
     echo "The site file is used for statistics even if fragment delimited maps are excluded"
     exit 100
+fi
+
+if [ ! -z "$stage" ]
+then
+    case $stage in
+        final) final=1 ;;
+	      early) early=1 ;;
+        postproc) postproc=1 ;;
+        *)  echo "$usageHelp"
+        echo "$stageHelp"
+        exit 1
+    esac
 fi
 
 ## Directories to be created and regex strings for listing files
@@ -194,6 +209,10 @@ qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/header.log -j oe -q batch -
   echo "$0 $@"
 EOF
 
+# Not in final or postproc
+if [ -z $final ] && [ -z $postproc ]
+then
+# Create top statistics file from all inter.txt files found under current dir
 jid1=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/topstats.log -j oe -N ${groupname}_Tstats -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -q batch <<-TOPSTATS
 export LC_ALL=C
 if ! awk -f ${juiceDir}/scripts/makemega_addstats.awk ${inter_names} > ${outputdir}/inter.txt
@@ -206,6 +225,8 @@ fi
 TOPSTATS
 )
 jobIDstr=${jid1}
+
+
 # Merge all merged_nodups.txt files found under current dir
 jid2=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/merge.log -j oe -q batch -N ${groupname}_merge -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=12:thinnode <<- MRGSRT
 if ! sort --parallel=12 -T ${tmpdir} -m -k2,2d -k6,6d ${merged_names} > ${outputdir}/merged_nodups.txt
@@ -219,7 +240,10 @@ fi
 MRGSRT
 )
 jobIDstr="${jobIDstr}:${jid2}"
+fi
 
+if [ -z $postproc ] && [ -z $early ]
+then
 # Create statistics files for MQ > 0
 jid3=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/inter0.log -j oe -q batch -N ${groupname}_inter0 -l mem=20gb -l walltime=24:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid1}:${jid2} <<- INTER0
 ${juiceDir}/scripts/statistics.pl -q 1 -o${outputdir}/inter.txt -s $site_file -l $ligation ${outputdir}/merged_nodups.txt
@@ -237,7 +261,7 @@ jobIDstr="${jobIDstr}:${jid4}"
 # Create HIC maps file for MQ > 0
 jid5=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hic0_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic0 -l mem=40gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC0
 $load_java
-if [ -z "$exclude" ]
+if [ -z "$fragment" ]
 then
   echo "Launching ${juiceDir}/scripts/juicer_tools pre ${resolutions} -f ${site_file} -s ${outputdir}/inter.txt -g ${outputdir}/inter_hists.m -q 1 ${outputdir}/merged_nodups.txt ${outputdir}/inter.hic ${genomeID}"
   ${juiceDir}/scripts/juicer_tools pre ${resolutions} -f ${site_file} -s ${outputdir}/inter.txt -g ${outputdir}/inter_hists.m -q 1 ${outputdir}/merged_nodups.txt ${outputdir}/inter.hic ${genomeID}
@@ -251,7 +275,7 @@ jobIDstr="${jobIDstr}:${jid5}"
 # Create HIC maps file for MQ > 30
 jid6=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hic30_${groupname}.log -j oe -q batch ${EMAIL} -N ${groupname}_hic30 -l mem=60gb -l walltime=168:00:00 -l nodes=1:ppn=1:thinnode -W depend=afterok:${jid4} <<- HIC30
 $load_java
-if [ -z "${exclude}" ]
+if [ -z "${fragment}" ]
 then
     echo "Launching ${juiceDir}/scripts/juicer_tools pre ${resolutions} -f ${site_file} -s ${outputdir}/inter_30.txt -g ${outputdir}/inter_30_hists.m -q 30 ${outputdir}/merged_nodups.txt ${outputdir}/inter_30.hic ${genomeID}"
     ${juiceDir}/scripts/juicer_tools pre ${resolutions} -f ${site_file} -s ${outputdir}/inter_30.txt -g ${outputdir}/inter_30_hists.m -q 30 ${outputdir}/merged_nodups.txt ${outputdir}/inter_30.hic ${genomeID}
@@ -262,7 +286,10 @@ fi
 HIC30
 )
 jobIDstr="${jobIDstr}:${jid6}"
+fi 
 
+if [ -z $early ]
+then
 # Create loop and domain lists file for MQ > 30
 jid7=$(qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/hiccups.log -j oe -q batch -N ${groupname}hiccups -l mem=60gb -l walltime=100:00:00 -l nodes=1:ppn=${threads} -W depend=afterok:${jid6} <<- HICCUPS
 $load_java
@@ -285,6 +312,10 @@ export LC_ALL=C
 ${juiceDir}/scripts/juicer_arrowhead.sh -j ${juiceDir}/scripts/juicer_tools -t ${threads} -i ${outputdir}/inter_30.hic
 ARROWHEAD
 )
+fi
+
+#reformat jobIDstr
+jobIDstr=`echo $jobIDstr | tr -s ":" | sed 's/^://g'`
 
 qsub -W group_list=cu_10027 -A cu_10027 -o ${logdir}/done.log -j oe -q batch -N ${groupname}_done -W depend=afterok:${jobIDstr} <<- FINAL
 echo "All jobs finished processing!"

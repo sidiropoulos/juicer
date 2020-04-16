@@ -149,7 +149,7 @@ scriptDirHelp="* [Juicer scripts directory]: set the Juicer directory,\n  which 
 refSeqHelp="* [reference genome file]: enter path for reference sequence file, BWA index\n  files must be in same directory"
 queueTimeHelp="* [queue time limit]: time limit for queue, i.e. -l 12:00 is 12 hours\n  (default ${walltime})"
 longQueueTimeHelp="* [long queue time limit]: time limit for long queue, i.e. -l 168:00 is one week\n  (default ${long_walltime})"
-excludeHelp="* -f: include fragment-delimited maps in hic file creation"
+fragmentHelp="* -f: include fragment-delimited maps in hic file creation"
 highresHelp="* -k: produce high-resolution maps (2.5kb, 1kb)"
 helpHelp="* -h: print this help and exit"
 
@@ -171,7 +171,7 @@ printHelpAndExit() {
     echo -e "$scriptDirHelp"
     echo -e "$queueTimeHelp"
     echo -e "$longQueueTimeHelp"
-    echo "$excludeHelp"
+    echo "$fragmentHelp"
     echo "$highresHelp"
     echo "$helpHelp"
     exit "$1"
