@@ -27,7 +27,7 @@
 # loops with HiCCUPS and inding motifs of these loops with MotifFinder.
 
 ## Read arguments
-usageHelp="Usage: ${0} [-h] -j <juicer_tools_file_path> -i <hic_file_path> -m <bed_file_dir> -g <genome ID>"
+usageHelp="Usage: ${0} [-h] -j <juicer_tools_file_path> -i <hic_file_path> -m <bed_file_dir> -g <genome ID> -t <threads>"
 
 printHelpAndExit() {
     echo "$usageHelp"
@@ -71,18 +71,18 @@ if [ ! -e "${bed_file_dir}" ]; then
 fi
 
 echo -e "\nHiCCUPS:\n"
-${juicer_tools_path} hiccups --cpu --threads ${threads} ${hic_file_path} ${hic_file_path%.*}"_loops.txt"
+${juicer_tools_path} hiccups --cpu --threads ${threads} ${hic_file_path} ${hic_file_path%.*}"_loops"
 if [ $? -ne 0 ]; then
     echo "***! Problem while running HiCCUPS";
     exit 100
 fi
 
-if [ -f ${hic_file_path%.*}"_loops.txt" ]
+if [ -e ${hic_file_path%.*}"_loops/merged_loops.bedpe" ]
 then
     echo -e "\nAPA:\n"
-    ${juicer_tools_path} apa ${hic_file_path} ${hic_file_path%.*}"_loops.txt" "apa_results"
+    ${juicer_tools_path} apa ${hic_file_path} ${hic_file_path%.*}"_loops/merged_loops.bedpe" "apa_results"
     echo -e "\nMOTIF FINDER:\n"
-    ${juicer_tools_path} motifs ${genomeID} ${bed_file_dir} ${hic_file_path%.*}"_loops.txt"
+    ${juicer_tools_path} motifs ${genomeID} ${bed_file_dir} ${hic_file_path%.*}"_loops"
     echo -e "\n(-: Feature annotation successfully completed (-:"
 else
     # if loop lists do not exist but Juicer tools didn't return an error, likely
